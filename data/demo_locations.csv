@@ -1,15 +1,15 @@
 location,building,latitude,longitude,occupancy
-North Campus,Science Complex,37.774649,-122.418499,450
-North Campus,Engineering Tower,37.776547,-122.418988,520
-North Campus,Bio-Tech Research Center,37.774916,-122.416068,340
-Central Quad,Student Union,37.774216,-122.421959,850
-Central Quad,Main Library,37.773765,-122.423075,350
-Central Quad,Dining Commons & Plaza,37.773567,-122.422592,920
-South Campus,Residence Hall Alpha,37.771664,-122.424718,600
-South Campus,Residence Hall Beta,37.770279,-122.423616,580
-South Campus,Athletics & Aquatic Center,37.769712,-122.42563,300
-East Annex,Central Plant & HVAC,37.775528,-122.414815,45
-East Annex,Admin Headquarters,37.774415,-122.416859,220
-East Annex,Data Center Facility,37.774098,-122.413569,60
-West Wing,Innovation & Robotics Hub,37.776609,-122.422305,390
-West Wing,Campus Health & Medical Center,37.77568,-122.425556,420
+"SNS Kalvi Nagar, Coimbatore",SNSCT Administrative & Main Block,11.083949,77.013401,480
+"SNS Kalvi Nagar, Coimbatore",Engineering & Technology Tower A,11.084997,77.012112,550
+"SNS Kalvi Nagar, Coimbatore","CSE, IT & AI-DS Tech Wing",11.084016,77.012832,600
+"SNS Kalvi Nagar, Coimbatore",Mechanical & Mechatronics Lab Complex,11.084116,77.011941,380
+"SNS Kalvi Nagar, Coimbatore",Central Library & Resource Center,11.084665,77.011225,350
+"SNS Kalvi Nagar, Coimbatore",Dr. SNS Innovation & Design Thinking Hub (i-Hub),11.084667,77.012308,420
+"SNS Kalvi Nagar, Coimbatore",Campus Cafeteria & Food Court,11.083364,77.011682,950
+"SNS Kalvi Nagar, Coimbatore",Kaveri Boys Residential Hostel,11.082379,77.012984,680
+"SNS Kalvi Nagar, Coimbatore",Bhavani Girls Residential Hostel,11.083212,77.01197,620
+"SNS Kalvi Nagar, Coimbatore",SNS Indoor Stadium & Sports Pavilion,11.082528,77.012685,350
+"SNS Kalvi Nagar, Coimbatore",Central RO Water Plant & Overhead Reservoir,11.084615,77.012941,30
+"SNS Kalvi Nagar, Coimbatore",Central Utility Plant & HVAC Chiller,11.085498,77.014631,45
+"Kurumbapalayam, Coimbatore",SNS College of Engineering (SNSCE) Main Campus,11.101809,77.017995,850
+"SNS Kalvi Nagar, Coimbatore",SNS Campus Health & Medical Center,11.08398,77.012344,120

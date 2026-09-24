@@ -14,7 +14,7 @@ let allBuildingsData = [];
 let filteredMeters = [];
 let filteredBuildings = [];
 let buildingPolygons = {}; // building_name -> L.polygon
-let mapState = { fitDone: false, showBuildings: true, activeBasemap: 'dark_canvas' };
+let mapState = { fitDone: false, showBuildings: true, activeBasemap: 'google_hybrid' };
 
 let liveSyncTimer = null;
 let simFingerprint = '';
@@ -23,52 +23,78 @@ let locateHandled = false;
 const CLASS_ORDER = ['normal', 'moderate', 'high', 'critical'];
 const CLASS_COLOR = { normal: '#e8ece9', moderate: '#d9c8a3', high: '#b0b3b6', critical: '#e26d6d' };
 
-// Basemap presets — completely free, keyless, zero watermarks
+// Basemap presets — Genuine Google Maps Satellite Hybrid, Roadmap, Satellite, & Terrain
 const BASEMAP_PRESETS = {
+  google_hybrid: {
+    name: 'Google Hybrid (Satellite + Roads)',
+    layers: [
+      {
+        url: 'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+        options: {
+          subdomains: ['0', '1', '2', '3'],
+          attribution: '&copy; Google Maps',
+          maxZoom: 21,
+          maxNativeZoom: 20
+        }
+      }
+    ],
+    className: ''
+  },
+  google_streets: {
+    name: 'Google Maps (Roadmap)',
+    layers: [
+      {
+        url: 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+        options: {
+          subdomains: ['0', '1', '2', '3'],
+          attribution: '&copy; Google Maps',
+          maxZoom: 21,
+          maxNativeZoom: 20
+        }
+      }
+    ],
+    className: ''
+  },
+  google_satellite: {
+    name: 'Google Satellite Aerial',
+    layers: [
+      {
+        url: 'https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+        options: {
+          subdomains: ['0', '1', '2', '3'],
+          attribution: '&copy; Google Maps',
+          maxZoom: 21,
+          maxNativeZoom: 20
+        }
+      }
+    ],
+    className: ''
+  },
+  google_terrain: {
+    name: 'Google Terrain',
+    layers: [
+      {
+        url: 'https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',
+        options: {
+          subdomains: ['0', '1', '2', '3'],
+          attribution: '&copy; Google Maps',
+          maxZoom: 21,
+          maxNativeZoom: 20
+        }
+      }
+    ],
+    className: ''
+  },
   dark_canvas: {
-    name: 'Dark Canvas',
+    name: 'Dark Canvas (Night Mode)',
     layers: [
       {
         url: 'https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-        options: { attribution: '&copy; <a href="https://www.esri.com/" target="_blank">Esri</a> &copy; OpenStreetMap contributors', maxZoom: 19, maxNativeZoom: 16 }
+        options: { attribution: '&copy; Esri &copy; OpenStreetMap', maxZoom: 19, maxNativeZoom: 16 }
       },
       {
         url: 'https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
         options: { attribution: '', maxZoom: 19, maxNativeZoom: 16 }
-      }
-    ],
-    className: ''
-  },
-  satellite: {
-    name: 'Satellite Aerial',
-    layers: [
-      {
-        url: 'https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        options: { attribution: '&copy; <a href="https://www.esri.com/" target="_blank">Esri</a>, DigitalGlobe, GeoEye', maxZoom: 19, maxNativeZoom: 18 }
-      },
-      {
-        url: 'https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
-        options: { attribution: '', maxZoom: 19, maxNativeZoom: 16 }
-      }
-    ],
-    className: ''
-  },
-  cyber_dark: {
-    name: 'Cyber Dark',
-    layers: [
-      {
-        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        options: { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>', maxZoom: 19 }
-      }
-    ],
-    className: 'cyber-dark-tiles'
-  },
-  street: {
-    name: 'OpenStreet',
-    layers: [
-      {
-        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        options: { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>', maxZoom: 19 }
       }
     ],
     className: ''
@@ -92,13 +118,15 @@ function initAquaMap() {
   const mapContainer = document.getElementById('map');
   if (!mapContainer) return;
 
+  // Set default center on SNS College of Technology & Engineering, Saravanampatti, Coimbatore
   mapInstance = L.map('map', {
     zoomControl: false,
     minZoom: 3
-  }).setView([37.7742, -122.4200], 15);
+  }).setView([11.0842, 77.0125], 17);
 
-  // Initialize key-free dark basemap
-  setBasemap('dark_canvas');
+  // Initialize real Google Maps Hybrid basemap by default
+  setBasemap('google_hybrid');
+
 
   // Custom zoom control
   mapInstance.zoomControlRemove = mapInstance.zoomControlRemove || {};

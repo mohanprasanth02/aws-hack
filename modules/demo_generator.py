@@ -5,21 +5,22 @@ import numpy as np
 import pandas as pd
 
 DEFAULT_LOCATIONS = [
-    {'location': 'North Campus', 'building': 'Science Complex', 'lat': 37.77490, 'lon': -122.41940, 'capacity': 5000.0, 'occupancy': 450, 'activity': 'Academic Lab'},
-    {'location': 'North Campus', 'building': 'Engineering Tower', 'lat': 37.77635, 'lon': -122.41830, 'capacity': 6000.0, 'occupancy': 520, 'activity': 'Research Facility'},
-    {'location': 'North Campus', 'building': 'Bio-Tech Research Center', 'lat': 37.77580, 'lon': -122.41680, 'capacity': 5500.0, 'occupancy': 340, 'activity': 'Biotech Cleanrooms'},
-    {'location': 'Central Quad', 'building': 'Student Union', 'lat': 37.77380, 'lon': -122.42100, 'capacity': 8000.0, 'occupancy': 850, 'activity': 'Dining & Commercial'},
-    {'location': 'Central Quad', 'building': 'Main Library', 'lat': 37.77310, 'lon': -122.42250, 'capacity': 4000.0, 'occupancy': 350, 'activity': 'Study / Library'},
-    {'location': 'Central Quad', 'building': 'Dining Commons & Plaza', 'lat': 37.77420, 'lon': -122.42220, 'capacity': 9500.0, 'occupancy': 920, 'activity': 'Food Services'},
-    {'location': 'South Campus', 'building': 'Residence Hall Alpha', 'lat': 37.77180, 'lon': -122.42430, 'capacity': 7000.0, 'occupancy': 600, 'activity': 'Residential'},
-    {'location': 'South Campus', 'building': 'Residence Hall Beta', 'lat': 37.77100, 'lon': -122.42320, 'capacity': 6800.0, 'occupancy': 580, 'activity': 'Residential'},
-    {'location': 'South Campus', 'building': 'Athletics & Aquatic Center', 'lat': 37.76980, 'lon': -122.42620, 'capacity': 12000.0, 'occupancy': 300, 'activity': 'Sports & Pool'},
-    {'location': 'East Annex', 'building': 'Central Plant & HVAC', 'lat': 37.77550, 'lon': -122.41500, 'capacity': 15000.0, 'occupancy': 45, 'activity': 'Industrial Utilities'},
-    {'location': 'East Annex', 'building': 'Admin Headquarters', 'lat': 37.77420, 'lon': -122.41620, 'capacity': 3500.0, 'occupancy': 220, 'activity': 'Administrative Offices'},
-    {'location': 'East Annex', 'building': 'Data Center Facility', 'lat': 37.77320, 'lon': -122.41450, 'capacity': 11500.0, 'occupancy': 60, 'activity': 'Server Infrastructure'},
-    {'location': 'West Wing', 'building': 'Innovation & Robotics Hub', 'lat': 37.77700, 'lon': -122.42150, 'capacity': 6200.0, 'occupancy': 390, 'activity': 'R&D Technology'},
-    {'location': 'West Wing', 'building': 'Campus Health & Medical Center', 'lat': 37.77580, 'lon': -122.42480, 'capacity': 7200.0, 'occupancy': 420, 'activity': 'Healthcare & Clinic'}
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'SNSCT Administrative & Main Block', 'lat': 11.08420, 'lon': 77.01250, 'capacity': 6000.0, 'occupancy': 480, 'activity': 'Academic Lab'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Engineering & Technology Tower A', 'lat': 11.08480, 'lon': 77.01280, 'capacity': 7000.0, 'occupancy': 550, 'activity': 'Engineering Labs'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'CSE, IT & AI-DS Tech Wing', 'lat': 11.08490, 'lon': 77.01210, 'capacity': 6500.0, 'occupancy': 600, 'activity': 'Computing Center'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Mechanical & Mechatronics Lab Complex', 'lat': 11.08370, 'lon': 77.01290, 'capacity': 8500.0, 'occupancy': 380, 'activity': 'Mechanical Workshop'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Central Library & Resource Center', 'lat': 11.08400, 'lon': 77.01180, 'capacity': 4000.0, 'occupancy': 350, 'activity': 'Study / Library'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Dr. SNS Innovation & Design Thinking Hub (i-Hub)', 'lat': 11.08530, 'lon': 77.01270, 'capacity': 7500.0, 'occupancy': 420, 'activity': 'Incubation & R&D'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Campus Cafeteria & Food Court', 'lat': 11.08350, 'lon': 77.01210, 'capacity': 10000.0, 'occupancy': 950, 'activity': 'Food Services'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Kaveri Boys Residential Hostel', 'lat': 11.08310, 'lon': 77.01340, 'capacity': 7500.0, 'occupancy': 680, 'activity': 'Residential'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Bhavani Girls Residential Hostel', 'lat': 11.08330, 'lon': 77.01140, 'capacity': 7200.0, 'occupancy': 620, 'activity': 'Residential'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'SNS Indoor Stadium & Sports Pavilion', 'lat': 11.08250, 'lon': 77.01250, 'capacity': 11000.0, 'occupancy': 350, 'activity': 'Sports & Pavilion'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Central RO Water Plant & Overhead Reservoir', 'lat': 11.08440, 'lon': 77.01360, 'capacity': 16000.0, 'occupancy': 30, 'activity': 'Water Treatment & Pumping'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Central Utility Plant & HVAC Chiller', 'lat': 11.08460, 'lon': 77.01370, 'capacity': 14000.0, 'occupancy': 45, 'activity': 'Industrial Utilities'},
+    {'location': 'Kurumbapalayam, Coimbatore', 'building': 'SNS College of Engineering (SNSCE) Main Campus', 'lat': 11.10220, 'lon': 77.01880, 'capacity': 12000.0, 'occupancy': 850, 'activity': 'Engineering Campus'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'SNS Campus Health & Medical Center', 'lat': 11.08410, 'lon': 77.01310, 'capacity': 6500.0, 'occupancy': 120, 'activity': 'Healthcare Clinic'}
 ]
+
 
 def generate_synthetic_water_dataset(num_meters=14, num_days=30, avg_hourly_usage=450.0, anomaly_rate=0.06, random_seed=42):
     """

@@ -48,13 +48,14 @@ HOURLY_PROFILE = [
 
 # Fallback meter definitions used only when the database has no meters yet.
 FALLBACK_METERS = [
-    {'meter_id': 'MTR-001', 'location': 'Administration Block', 'building': 'Admin HQ',      'lat': 37.7742, 'lon': -122.4165, 'base': 1100.0},
-    {'meter_id': 'MTR-002', 'location': 'Hostel',              'building': 'Residence Alpha', 'lat': 37.7715, 'lon': -122.4240, 'base': 1500.0},
-    {'meter_id': 'MTR-003', 'location': 'Canteen',             'building': 'Student Union',   'lat': 37.7738, 'lon': -122.4210, 'base': 900.0},
-    {'meter_id': 'MTR-004', 'location': 'Laboratory',          'building': 'Science Complex', 'lat': 37.7749, 'lon': -122.4194, 'base': 800.0},
-    {'meter_id': 'MTR-005', 'location': 'Residential Block',   'building': 'Residence Beta',  'lat': 37.7718, 'lon': -122.4212, 'base': 1700.0},
-    {'meter_id': 'MTR-006', 'location': 'Garden / Irrigation', 'building': 'Grounds & Hvac',  'lat': 37.7755, 'lon': -122.4150, 'base': 650.0},
+    {'meter_id': 'MTR-001', 'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'SNSCT Administrative & Main Block', 'lat': 11.0842, 'lon': 77.0125, 'base': 1100.0},
+    {'meter_id': 'MTR-002', 'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Kaveri Boys Residential Hostel',     'lat': 11.0831, 'lon': 77.0134, 'base': 1500.0},
+    {'meter_id': 'MTR-003', 'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Campus Cafeteria & Food Court',        'lat': 11.0835, 'lon': 77.0121, 'base': 900.0},
+    {'meter_id': 'MTR-004', 'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Engineering & Technology Tower A',    'lat': 11.0848, 'lon': 77.0128, 'base': 800.0},
+    {'meter_id': 'MTR-005', 'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Bhavani Girls Residential Hostel',    'lat': 11.0833, 'lon': 77.0114, 'base': 1700.0},
+    {'meter_id': 'MTR-006', 'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Central RO Water Plant & Reservoir',  'lat': 11.0844, 'lon': 77.0136, 'base': 650.0},
 ]
+
 
 SCENARIOS = {
     'normal':            'Normal',
