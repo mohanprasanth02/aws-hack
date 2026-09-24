@@ -2,27 +2,28 @@
 # AQUAGUARD AI — CAMPUS BUILDINGS GEOSPATIAL INTELLIGENCE REGISTRY
 # Architectural building footprints, polygons, and campus metadata for:
 # SNS College of Technology (SNSCT) & SNS College of Engineering (SNSCE)
-# SNS Kalvi Nagar, Sathy Main Road, Saravanampatti, Coimbatore, Tamil Nadu, India
-# Latitude: 11.08420 N, Longitude: 77.01250 E
+# SNS Kalvi Nagar, Sathy Main Road (NH-948 / Kurumbapalayam Rd),
+# Saravanampatti, Coimbatore, Tamil Nadu 641035, India
+# Latitude: 11.10180 N, Longitude: 77.02750 E
 # ==========================================================================
 
-# Realistically modeled campus buildings with architectural footprint coordinates in SNS College, Coimbatore
+# Realistically modeled campus buildings positioned precisely across the SNS College campus in Coimbatore
 CAMPUS_BUILDINGS = [
     {
         'id': 'bld-sns-admin',
-        'name': 'SNSCT Administrative & Main Block',
+        'name': 'SNSCT Administrative & Main Academic Block',
         'location': 'SNS Kalvi Nagar, Coimbatore',
         'type': 'Administrative & Academic Offices',
         'icon': 'bi-building-fill',
-        'center': [11.08420, 77.01250],
+        'center': [11.10180, 77.02750],
         'occupancy': 480,
         'area_sqm': 14500,
         'floors': 5,
         'polygon': [
-            [11.08445, 77.01220],
-            [11.08445, 77.01280],
-            [11.08395, 77.01280],
-            [11.08395, 77.01220]
+            [11.10210, 77.02710],
+            [11.10210, 77.02790],
+            [11.10150, 77.02790],
+            [11.10150, 77.02710]
         ]
     },
     {
@@ -31,15 +32,15 @@ CAMPUS_BUILDINGS = [
         'location': 'SNS Kalvi Nagar, Coimbatore',
         'type': 'Engineering Labs & Smart Classrooms',
         'icon': 'bi-cpu-fill',
-        'center': [11.08480, 77.01280],
+        'center': [11.10260, 77.02820],
         'occupancy': 550,
         'area_sqm': 16000,
         'floors': 6,
         'polygon': [
-            [11.08505, 77.01255],
-            [11.08505, 77.01305],
-            [11.08455, 77.01305],
-            [11.08455, 77.01255]
+            [11.10290, 77.02790],
+            [11.10290, 77.02850],
+            [11.10230, 77.02850],
+            [11.10230, 77.02790]
         ]
     },
     {
@@ -48,15 +49,15 @@ CAMPUS_BUILDINGS = [
         'location': 'SNS Kalvi Nagar, Coimbatore',
         'type': 'Computing Hub & AI Labs',
         'icon': 'bi-laptop',
-        'center': [11.08490, 77.01210],
+        'center': [11.10280, 77.02680],
         'occupancy': 600,
         'area_sqm': 13500,
         'floors': 5,
         'polygon': [
-            [11.08515, 77.01185],
-            [11.08515, 77.01235],
-            [11.08465, 77.01235],
-            [11.08465, 77.01185]
+            [11.10310, 77.02650],
+            [11.10310, 77.02710],
+            [11.10250, 77.02710],
+            [11.10250, 77.02650]
         ]
     },
     {
@@ -65,15 +66,15 @@ CAMPUS_BUILDINGS = [
         'location': 'SNS Kalvi Nagar, Coimbatore',
         'type': 'Heavy Machinery & Robotics Workshop',
         'icon': 'bi-gear-wide-connected',
-        'center': [11.08370, 77.01290],
+        'center': [11.10100, 77.02840],
         'occupancy': 380,
         'area_sqm': 11800,
         'floors': 3,
         'polygon': [
-            [11.08395, 77.01265],
-            [11.08395, 77.01315],
-            [11.08345, 77.01315],
-            [11.08345, 77.01265]
+            [11.10130, 77.02810],
+            [11.10130, 77.02870],
+            [11.10070, 77.02870],
+            [11.10070, 77.02810]
         ]
     },
     {
@@ -82,15 +83,15 @@ CAMPUS_BUILDINGS = [
         'location': 'SNS Kalvi Nagar, Coimbatore',
         'type': 'Digital Archive & Study Center',
         'icon': 'bi-book-half',
-        'center': [11.08400, 77.01180],
+        'center': [11.10140, 77.02620],
         'occupancy': 350,
         'area_sqm': 8500,
         'floors': 4,
         'polygon': [
-            [11.08425, 77.01155],
-            [11.08425, 77.01205],
-            [11.08375, 77.01205],
-            [11.08375, 77.01155]
+            [11.10170, 77.02590],
+            [11.10170, 77.02650],
+            [11.10110, 77.02650],
+            [11.10110, 77.02590]
         ]
     },
     {
@@ -99,15 +100,15 @@ CAMPUS_BUILDINGS = [
         'location': 'SNS Kalvi Nagar, Coimbatore',
         'type': 'Incubation & Startup Accelerator',
         'icon': 'bi-lightbulb-fill',
-        'center': [11.08530, 77.01270],
+        'center': [11.10330, 77.02760],
         'occupancy': 420,
         'area_sqm': 10500,
         'floors': 4,
         'polygon': [
-            [11.08555, 77.01245],
-            [11.08555, 77.01295],
-            [11.08505, 77.01295],
-            [11.08505, 77.01245]
+            [11.10360, 77.02730],
+            [11.10360, 77.02790],
+            [11.10300, 77.02790],
+            [11.10300, 77.02730]
         ]
     },
     {
@@ -116,15 +117,15 @@ CAMPUS_BUILDINGS = [
         'location': 'SNS Kalvi Nagar, Coimbatore',
         'type': 'Student Dining & Food Services',
         'icon': 'bi-cup-hot-fill',
-        'center': [11.08350, 77.01210],
+        'center': [11.10080, 77.02660],
         'occupancy': 950,
         'area_sqm': 7500,
         'floors': 2,
         'polygon': [
-            [11.08375, 77.01185],
-            [11.08375, 77.01235],
-            [11.08325, 77.01235],
-            [11.08325, 77.01185]
+            [11.10110, 77.02630],
+            [11.10110, 77.02690],
+            [11.10050, 77.02690],
+            [11.10050, 77.02630]
         ]
     },
     {
@@ -133,15 +134,15 @@ CAMPUS_BUILDINGS = [
         'location': 'SNS Kalvi Nagar, Coimbatore',
         'type': 'Student Housing Block Alpha',
         'icon': 'bi-houses-fill',
-        'center': [11.08310, 77.01340],
+        'center': [11.09980, 77.02880],
         'occupancy': 680,
         'area_sqm': 15000,
         'floors': 6,
         'polygon': [
-            [11.08335, 77.01315],
-            [11.08335, 77.01365],
-            [11.08285, 77.01365],
-            [11.08285, 77.01315]
+            [11.10010, 77.02850],
+            [11.10010, 77.02910],
+            [11.09950, 77.02910],
+            [11.09950, 77.02850]
         ]
     },
     {
@@ -150,15 +151,15 @@ CAMPUS_BUILDINGS = [
         'location': 'SNS Kalvi Nagar, Coimbatore',
         'type': 'Student Housing Block Beta',
         'icon': 'bi-houses',
-        'center': [11.08330, 77.01140],
+        'center': [11.10020, 77.02540],
         'occupancy': 620,
         'area_sqm': 14200,
         'floors': 6,
         'polygon': [
-            [11.08355, 77.01115],
-            [11.08355, 77.01165],
-            [11.08305, 77.01165],
-            [11.08305, 77.01115]
+            [11.10050, 77.02510],
+            [11.10050, 77.02570],
+            [11.09990, 77.02570],
+            [11.09990, 77.02510]
         ]
     },
     {
@@ -167,15 +168,15 @@ CAMPUS_BUILDINGS = [
         'location': 'SNS Kalvi Nagar, Coimbatore',
         'type': 'Athletics & Gymnasium',
         'icon': 'bi-trophy-fill',
-        'center': [11.08250, 77.01250],
+        'center': [11.09920, 77.02720],
         'occupancy': 350,
         'area_sqm': 18000,
         'floors': 2,
         'polygon': [
-            [11.08280, 77.01220],
-            [11.08280, 77.01280],
-            [11.08220, 77.01280],
-            [11.08220, 77.01220]
+            [11.09950, 77.02680],
+            [11.09950, 77.02760],
+            [11.09890, 77.02760],
+            [11.09890, 77.02680]
         ]
     },
     {
@@ -184,15 +185,15 @@ CAMPUS_BUILDINGS = [
         'location': 'SNS Kalvi Nagar, Coimbatore',
         'type': 'Campus Water Purification & Recycling',
         'icon': 'bi-water',
-        'center': [11.08440, 77.01360],
+        'center': [11.10220, 77.02950],
         'occupancy': 30,
         'area_sqm': 4200,
         'floors': 2,
         'polygon': [
-            [11.08465, 77.01340],
-            [11.08465, 77.01380],
-            [11.08415, 77.01380],
-            [11.08415, 77.01340]
+            [11.10250, 77.02920],
+            [11.10250, 77.02980],
+            [11.10190, 77.02980],
+            [11.10190, 77.02920]
         ]
     },
     {
@@ -201,32 +202,32 @@ CAMPUS_BUILDINGS = [
         'location': 'SNS Kalvi Nagar, Coimbatore',
         'type': 'Central Utilities & Industrial Plant',
         'icon': 'bi-fan',
-        'center': [11.08460, 77.01370],
+        'center': [11.10250, 77.02980],
         'occupancy': 45,
         'area_sqm': 6000,
         'floors': 2,
         'polygon': [
-            [11.08485, 77.01350],
-            [11.08485, 77.01390],
-            [11.08435, 77.01390],
-            [11.08435, 77.01350]
+            [11.10280, 77.02950],
+            [11.10280, 77.03010],
+            [11.10220, 77.03010],
+            [11.10220, 77.02950]
         ]
     },
     {
         'id': 'bld-snsce-main',
         'name': 'SNS College of Engineering (SNSCE) Main Campus',
-        'location': 'Kurumbapalayam, Coimbatore',
+        'location': 'SNS Kalvi Nagar, Coimbatore',
         'type': 'Engineering & Polytechnic Campus',
         'icon': 'bi-mortarboard-fill',
-        'center': [11.10220, 77.01880],
+        'center': [11.10380, 77.02850],
         'occupancy': 850,
         'area_sqm': 22000,
         'floors': 5,
         'polygon': [
-            [11.10255, 77.01845],
-            [11.10255, 77.01915],
-            [11.10185, 77.01915],
-            [11.10185, 77.01845]
+            [11.10420, 77.02810],
+            [11.10420, 77.02890],
+            [11.10340, 77.02890],
+            [11.10340, 77.02810]
         ]
     },
     {
@@ -235,22 +236,22 @@ CAMPUS_BUILDINGS = [
         'location': 'SNS Kalvi Nagar, Coimbatore',
         'type': 'Healthcare Clinic & First Aid',
         'icon': 'bi-hospital-fill',
-        'center': [11.08410, 77.01310],
+        'center': [11.10150, 77.02800],
         'occupancy': 120,
         'area_sqm': 4500,
         'floors': 2,
         'polygon': [
-            [11.08430, 77.01290],
-            [11.08430, 77.01330],
-            [11.08390, 77.01330],
-            [11.08390, 77.01290]
+            [11.10180, 77.02770],
+            [11.10180, 77.02830],
+            [11.10120, 77.02830],
+            [11.10120, 77.02770]
         ]
     }
 ]
 
 # Legacy / Alternative Building Names mapping to SNS Campus Buildings
 BUILDING_NAME_ALIASES = {
-    'Science Complex': 'SNSCT Administrative & Main Block',
+    'Science Complex': 'SNSCT Administrative & Main Academic Block',
     'Engineering Tower': 'Engineering & Technology Tower A',
     'Bio-Tech Research Center': 'CSE, IT & AI-DS Tech Wing',
     'Student Union': 'Dr. SNS Innovation & Design Thinking Hub (i-Hub)',
@@ -260,7 +261,7 @@ BUILDING_NAME_ALIASES = {
     'Residence Hall Beta': 'Bhavani Girls Residential Hostel',
     'Athletics & Aquatic Center': 'SNS Indoor Stadium & Sports Pavilion',
     'Central Plant & HVAC': 'Central RO Water Plant & Overhead Reservoir',
-    'Admin Headquarters': 'SNSCT Administrative & Main Block',
+    'Admin Headquarters': 'SNSCT Administrative & Main Academic Block',
     'Data Center Facility': 'Central Utility Plant & HVAC Chiller',
     'Innovation & Robotics Hub': 'SNS College of Engineering (SNSCE) Main Campus',
     'Campus Health & Medical Center': 'SNS Campus Health & Medical Center'

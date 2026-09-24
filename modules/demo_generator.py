@@ -5,20 +5,20 @@ import numpy as np
 import pandas as pd
 
 DEFAULT_LOCATIONS = [
-    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'SNSCT Administrative & Main Block', 'lat': 11.08420, 'lon': 77.01250, 'capacity': 6000.0, 'occupancy': 480, 'activity': 'Academic Lab'},
-    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Engineering & Technology Tower A', 'lat': 11.08480, 'lon': 77.01280, 'capacity': 7000.0, 'occupancy': 550, 'activity': 'Engineering Labs'},
-    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'CSE, IT & AI-DS Tech Wing', 'lat': 11.08490, 'lon': 77.01210, 'capacity': 6500.0, 'occupancy': 600, 'activity': 'Computing Center'},
-    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Mechanical & Mechatronics Lab Complex', 'lat': 11.08370, 'lon': 77.01290, 'capacity': 8500.0, 'occupancy': 380, 'activity': 'Mechanical Workshop'},
-    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Central Library & Resource Center', 'lat': 11.08400, 'lon': 77.01180, 'capacity': 4000.0, 'occupancy': 350, 'activity': 'Study / Library'},
-    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Dr. SNS Innovation & Design Thinking Hub (i-Hub)', 'lat': 11.08530, 'lon': 77.01270, 'capacity': 7500.0, 'occupancy': 420, 'activity': 'Incubation & R&D'},
-    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Campus Cafeteria & Food Court', 'lat': 11.08350, 'lon': 77.01210, 'capacity': 10000.0, 'occupancy': 950, 'activity': 'Food Services'},
-    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Kaveri Boys Residential Hostel', 'lat': 11.08310, 'lon': 77.01340, 'capacity': 7500.0, 'occupancy': 680, 'activity': 'Residential'},
-    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Bhavani Girls Residential Hostel', 'lat': 11.08330, 'lon': 77.01140, 'capacity': 7200.0, 'occupancy': 620, 'activity': 'Residential'},
-    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'SNS Indoor Stadium & Sports Pavilion', 'lat': 11.08250, 'lon': 77.01250, 'capacity': 11000.0, 'occupancy': 350, 'activity': 'Sports & Pavilion'},
-    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Central RO Water Plant & Overhead Reservoir', 'lat': 11.08440, 'lon': 77.01360, 'capacity': 16000.0, 'occupancy': 30, 'activity': 'Water Treatment & Pumping'},
-    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Central Utility Plant & HVAC Chiller', 'lat': 11.08460, 'lon': 77.01370, 'capacity': 14000.0, 'occupancy': 45, 'activity': 'Industrial Utilities'},
-    {'location': 'Kurumbapalayam, Coimbatore', 'building': 'SNS College of Engineering (SNSCE) Main Campus', 'lat': 11.10220, 'lon': 77.01880, 'capacity': 12000.0, 'occupancy': 850, 'activity': 'Engineering Campus'},
-    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'SNS Campus Health & Medical Center', 'lat': 11.08410, 'lon': 77.01310, 'capacity': 6500.0, 'occupancy': 120, 'activity': 'Healthcare Clinic'}
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'SNSCT Administrative & Main Academic Block', 'lat': 11.10180, 'lon': 77.02750, 'capacity': 6000.0, 'occupancy': 480, 'activity': 'Academic Lab'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Engineering & Technology Tower A', 'lat': 11.10260, 'lon': 77.02820, 'capacity': 7000.0, 'occupancy': 550, 'activity': 'Engineering Labs'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'CSE, IT & AI-DS Tech Wing', 'lat': 11.10280, 'lon': 77.02680, 'capacity': 6500.0, 'occupancy': 600, 'activity': 'Computing Center'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Mechanical & Mechatronics Lab Complex', 'lat': 11.10100, 'lon': 77.02840, 'capacity': 8500.0, 'occupancy': 380, 'activity': 'Mechanical Workshop'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Central Library & Resource Center', 'lat': 11.10140, 'lon': 77.02620, 'capacity': 4000.0, 'occupancy': 350, 'activity': 'Study / Library'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Dr. SNS Innovation & Design Thinking Hub (i-Hub)', 'lat': 11.10330, 'lon': 77.02760, 'capacity': 7500.0, 'occupancy': 420, 'activity': 'Incubation & R&D'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Campus Cafeteria & Food Court', 'lat': 11.10080, 'lon': 77.02660, 'capacity': 10000.0, 'occupancy': 950, 'activity': 'Food Services'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Kaveri Boys Residential Hostel', 'lat': 11.09980, 'lon': 77.02880, 'capacity': 7500.0, 'occupancy': 680, 'activity': 'Residential'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Bhavani Girls Residential Hostel', 'lat': 11.10020, 'lon': 77.02540, 'capacity': 7200.0, 'occupancy': 620, 'activity': 'Residential'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'SNS Indoor Stadium & Sports Pavilion', 'lat': 11.09920, 'lon': 77.02720, 'capacity': 11000.0, 'occupancy': 350, 'activity': 'Sports & Pavilion'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Central RO Water Plant & Overhead Reservoir', 'lat': 11.10220, 'lon': 77.02950, 'capacity': 16000.0, 'occupancy': 30, 'activity': 'Water Treatment & Pumping'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'Central Utility Plant & HVAC Chiller', 'lat': 11.10250, 'lon': 77.02980, 'capacity': 14000.0, 'occupancy': 45, 'activity': 'Industrial Utilities'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'SNS College of Engineering (SNSCE) Main Campus', 'lat': 11.10380, 'lon': 77.02850, 'capacity': 12000.0, 'occupancy': 850, 'activity': 'Engineering Campus'},
+    {'location': 'SNS Kalvi Nagar, Coimbatore', 'building': 'SNS Campus Health & Medical Center', 'lat': 11.10150, 'lon': 77.02800, 'capacity': 6500.0, 'occupancy': 120, 'activity': 'Healthcare Clinic'}
 ]
 
 
