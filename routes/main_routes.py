@@ -290,3 +290,9 @@ def work_orders():
     orders = WorkOrder.query.order_by(WorkOrder.created_at.desc()).all()
     return render_template('pages/work_orders.html', meters=meters, orders=orders)
 
+@main_bp.route('/mobile-app')
+def mobile_app():
+    """Live interactive companion mobile interface matching the Flutter app."""
+    return render_template('pages/mobile_worker.html')
+
+
