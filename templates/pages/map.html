@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}Water Usage Risk Map — AquaGuard AI{% endblock %}
+
+{% block content %}
+<!-- ============================================================
+     WATER RISK NETWORK — PAGE HEADER
+     ============================================================ -->
+<div class="glass-panel p-4 mb-3 aq-page-head">
+  <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+    <div>
+      <h3 class="h5 fw-bold text-white mb-1">
+        <i class="bi bi-signpost-split text-info me-2"></i>Water Risk Network
+      </h3>
+      <p class="text-secondary small mb-0">Geographic intelligence for water consumption anomalies.</p>
+    </div>
+    <div class="text-end">
+      <span class="map-live-chip"><span class="live-dot ok"></span><span id="mapLiveLabel">DATA READY</span></span>
+      <div class="text-secondary small font-mono mt-1" id="mapLastAnalysis">Last analysis: —</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MAP STAGE + RIGHT INTELLIGENCE PANEL
+     ============================================================ -->
+<div class="row g-3 aq-map-layout mb-4">
+
+  <!-- MAP STAGE (≈72% desktop) -->
+  <div class="col-xl-9 map-stage-col">
+    <div class="map-stage" id="mapStage">
+
+      <!-- Map top chrome -->
+      <div class="map-stage-top">
+        <div class="ms-title">
+          <span class="ms-orb"><i class="bi bi-droplet-fill"></i></span>
+          <div class="ms-title-box">
+            <strong>Water Usage Risk Map</strong>
+            <span class="ms-live"><span class="live-dot ok"></span><span id="mapStageLiveLabel">DATA READY</span></span>
+          </div>
+        </div>
+
+        <div class="ms-search">
+          <i class="bi bi-search"></i>
+          <input type="text" id="mapSearchInput" placeholder="Search meters..." aria-label="Search meters" autocomplete="off">
+        </div>
+
+        <button type="button" class="aq-btn d-xl-none" id="mapFilterToggle" aria-label="Toggle filters" title="Filter map">
+          <i class="bi bi-funnel"></i>
+        </button>
+      </div>
+
+      <!-- Filter rail -->
+      <div class="ms-filters" id="mapFilterBar">
+        <select id="filterLocation" class="fs" aria-label="Filter by location">
+          <option value="">All Locations</option>
+        </select>
+        <select id="filterBuilding" class="fs" aria-label="Filter by building">
+          <option value="">All Buildings</option>
+        </select>
+        <select id="filterSeverity" class="fs" aria-label="Filter by risk class">
+          <option value="">All Risk</option>
+          <option value="normal">Normal</option>
+          <option value="moderate">Moderate</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+        <button type="button" class="aq-btn aq-btn-ghost" id="btnApplyFilters" aria-label="Apply map filters">
+          <i class="bi bi-funnel-fill me-1"></i> Apply
+        </button>
+        <span class="ms-count" id="panelMeterCount">0 meters</span>
+      </div>
+
+      <!-- The map -->
+      <div id="map" class="aq-map-canvas" aria-label="Interactive water risk map"></div>
+
+      <!-- Floating map status panel -->
+      <div class="map-stats" id="mapStats" aria-label="Map statistics">
+        <div class="ms-grid">
+          <div class="ms-cell"><div class="ms-num" id="statMeters">0</div><div class="ms-cap">METERS</div></div>
+          <div class="ms-cell"><div class="ms-num" id="statAnomalies">0</div><div class="ms-cap">ANOMALIES</div></div>
+          <div class="ms-cell"><div class="ms-num text-warning" id="statHigh">0</div><div class="ms-cap">HIGH</div></div>
+          <div class="ms-cell"><div class="ms-num text-danger" id="statCritical">0</div><div class="ms-cap">CRITICAL</div></div>
+        </div>
+      </div>
+
+      <!-- Custom glass map controls -->
+      <div class="map-action-cluster" id="mapActionCluster">
+        <button type="button" class="aq-btn" id="btnZoomIn" aria-label="Zoom in" title="Zoom in"><i class="bi bi-plus-lg"></i></button>
+        <button type="button" class="aq-btn" id="btnZoomOut" aria-label="Zoom out" title="Zoom out"><i class="bi bi-dash-lg"></i></button>
+        <button type="button" class="aq-btn" id="btnResetView" aria-label="Reset view" title="Reset view"><i class="bi bi-bullseye"></i></button>
+        <button type="button" class="aq-btn active" id="btnToggleBuildings" aria-label="Toggle buildings layer" title="Toggle Buildings Layer"><i class="bi bi-buildings-fill"></i></button>
+        <button type="button" class="aq-btn" id="btnBasemapSelect" aria-label="Switch map style" title="Basemap Styles"><i class="bi bi-layers-half"></i></button>
+        <button type="button" class="aq-btn" id="btnCritical" aria-label="Show critical only" title="Show critical"><i class="bi bi-radioactive"></i></button>
+        <button type="button" class="aq-btn" id="btnFullscreen" aria-label="Toggle fullscreen" title="Fullscreen"><i class="bi bi-arrows-fullscreen"></i></button>
+      </div>
+
+      <!-- Basemap style switcher menu -->
+      <div class="aq-basemap-menu" id="basemapMenu" style="display: none;">
+        <div class="bm-head">
+          <span><i class="bi bi-map-fill me-1"></i> Basemap Style</span>
+          <button type="button" class="bm-close" id="btnBasemapClose">&times;</button>
+        </div>
+        <div class="bm-options">
+          <button type="button" class="bm-opt active" data-style="dark_canvas">
+            <span class="bm-dot dark"></span>
+            <div class="bm-text">
+              <strong>Dark Canvas</strong>
+              <small>High contrast, clean</small>
+            </div>
+          </button>
+          <button type="button" class="bm-opt" data-style="satellite">
+            <span class="bm-dot sat"></span>
+            <div class="bm-text">
+              <strong>Satellite Aerial</strong>
+              <small>Photographic rooftops</small>
+            </div>
+          </button>
+          <button type="button" class="bm-opt" data-style="cyber_dark">
+            <span class="bm-dot cyber"></span>
+            <div class="bm-text">
+              <strong>Cyber Dark</strong>
+              <small>Inverted street grid</small>
+            </div>
+          </button>
+          <button type="button" class="bm-opt" data-style="street">
+            <span class="bm-dot street"></span>
+            <div class="bm-text">
+              <strong>OpenStreet</strong>
+              <small>Standard cartography</small>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Risk legend -->
+      <div class="map-legend" aria-label="Map legend">
+        <span class="legend-title">LIVE RISK</span>
+        <span class="legend-item"><i class="lg-dot normal"></i> Normal</span>
+        <span class="legend-item"><i class="lg-dot moderate"></i> Moderate</span>
+        <span class="legend-item"><i class="lg-dot high"></i> High</span>
+        <span class="legend-item"><i class="lg-dot critical"></i> Critical</span>
+        <span class="legend-item"><i class="lg-zone"></i> Risk zone</span>
+        <span class="legend-item"><i class="lg-bld"></i> Campus Buildings</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT INTELLIGENCE / REGISTRY PANEL (≈28% desktop) -->
+  <div class="col-xl-3 map-panel-col">
+    <aside class="map-intel" id="mapIntel" aria-label="Meter intelligence panel">
+      <div class="map-intel-body" id="mapIntelBody"></div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  initAquaMap();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Error {{ error_code }} — AquaGuard AI{% endblock %}
+
+{% block content %}
+<div class="glass-card p-5 text-center my-4" style="max-width: 600px; margin: 0 auto;">
+  <div style="width:64px;height:64px;border-radius:50%;display:grid;place-items:center;margin:0 auto 18px;font-size:30px;color:var(--red);background:radial-gradient(circle at 35% 30%, rgba(226,109,109,.22), rgba(30,12,14,.92) 65%, rgba(8,5,6,.98));border:1px solid rgba(226,109,109,.5);box-shadow:0 0 28px rgba(226,109,109,.18), inset 0 0 14px rgba(226,109,109,.12);">
+    <i class="bi bi-exclamation-triangle"></i>
+  </div>
+
+  <h1 class="h3 fw-bold text-white mb-2">Error {{ error_code }}</h1>
+  <p class="text-secondary mb-4">{{ error_message }}</p>
+
+  <div class="d-flex justify-content-center gap-3">
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-holo">
+      <i class="bi bi-speedometer2 me-1"></i> Return to Dashboard
+    </a>
+    <a href="{{ url_for('main.index') }}" class="btn btn-holo-alt">
+      <i class="bi bi-house me-1"></i> Home
+    </a>
+  </div>
+</div>
+{% endblock %}

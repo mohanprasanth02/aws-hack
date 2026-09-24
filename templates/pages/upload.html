@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+
+{% block title %}Water Data Portal — AquaGuard AI{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Left Column: Drop Portal & Pipeline -->
+  <div class="col-lg-7">
+    <div class="glass-panel p-4 mb-4">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+          <h3 class="h5 fw-bold text-white mb-1"><i class="bi bi-cloud-arrow-up text-info me-2"></i>Water Data Portal</h3>
+          <p class="text-secondary small mb-0">Melds manual meter records, sub-meter spreadsheets and SCADA exports into the Water Core.</p>
+        </div>
+        <a href="/api/template/download" class="btn btn-sm btn-holo-alt">
+          <i class="bi bi-download me-1"></i> Schema Template
+        </a>
+      </div>
+
+      <!-- Holographic Drop Portal -->
+      <div id="dropZone" class="drop-portal mb-3" role="button" tabindex="0" aria-label="Upload meter spreadsheet">
+        <div class="drop-ripple"><span></span><span></span><span></span></div>
+        <div class="drop-orb"><i class="bi bi-file-earmark-arrow-up"></i></div>
+        <h3>Drop Your Water Data</h3>
+        <div class="fmts">.CSV · .XLSX · .XLS</div>
+        <p>Standard manual utility logs, sub-meter spreadsheets or SCADA export files.</p>
+        <input type="file" id="fileInput" accept=".csv, .xlsx, .xls" style="display: none;">
+        <button type="button" class="btn btn-holo" onclick="document.getElementById('fileInput').click()">
+          <i class="bi bi-folder2-open me-1"></i> Browse Local Files
+        </button>
+      </div>
+
+      <!-- Selected File Capsule -->
+      <div id="fileInfoBanner" class="glass-panel p-3 mb-3 border-info border-opacity-25" style="display: none;">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-file-earmark-spreadsheet text-info fs-3"></i>
+            <div>
+              <div class="text-white fw-bold small text-truncate font-mono" id="fileNameDisplay" style="max-width: 280px;">file.csv</div>
+              <div class="text-secondary small font-mono" id="fileMetaDisplay">0 KB • spreadsheet</div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="clearSelectedFile()">
+            <i class="bi bi-trash fs-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Inline Pipeline Progress -->
+      <div id="uploadProgressContainer" class="mb-3" style="display: none;">
+        <div class="d-flex justify-content-between small text-secondary mb-1 font-mono">
+          <span id="pipelineStepText">Validating schema structure...</span>
+          <span id="pipelineStepPct">0%</span>
+        </div>
+        <div class="progress" style="height: 6px;">
+          <div id="pipelineProgressBar" class="progress-bar" role="progressbar" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" id="validateUploadBtn" class="btn btn-holo" onclick="startValidation()" disabled>
+          <i class="bi bi-play-circle-fill me-1"></i> Validate & Process
+        </button>
+        <button type="button" class="btn btn-holo-eco" onclick="triggerLaunchDemo(6, 21)">
+          <i class="bi bi-lightning-charge me-1"></i> Load Demo Benchmark
+        </button>
+        <button type="button" class="btn btn-holo-alt" onclick="clearSelectedFile()">
+          <i class="bi bi-x-circle me-1"></i> Clear
+        </button>
+      </div>
+    </div>
+
+    <!-- Autonomous Pipeline Reference -->
+    <div class="glass-panel p-4">
+      <h4 class="h6 fw-bold text-white mb-3"><i class="bi bi-cpu text-info me-2"></i>Multi-Stage Autonomous Pipeline</h4>
+      <div class="pipe-flow-row">
+        <span class="pipe-flow-step done"><span class="ic"><i class="bi bi-check2"></i></span> Ingestion</span>
+        <span class="pipe-flow-step done"><span class="ic"><i class="bi bi-check2"></i></span> Validation</span>
+        <span class="pipe-flow-step done"><span class="ic"><i class="bi bi-check2"></i></span> Cleansing</span>
+        <span class="pipe-flow-step done"><span class="ic"><i class="bi bi-check2"></i></span> Baseline</span>
+        <span class="pipe-flow-step done"><span class="ic"><i class="bi bi-check2"></i></span> Detection</span>
+        <span class="pipe-flow-step done"><span class="ic"><i class="bi bi-check2"></i></span> Root Cause</span>
+        <span class="pipe-flow-step done"><span class="ic"><i class="bi bi-check2"></i></span> Sustain</span>
+      </div>
+      <p class="text-secondary small mb-0 mt-2 font-mono" style="font-size:10px;">
+        7-DAY ROLLING ENVELOPES → Z-SCORE/IQR FENCES → ISOLATION FOREST MANIFOLD → HYBRID RISK SCORE → EXPLAINABLE HYPOTHESES
+      </p>
+    </div>
+  </div>
+
+  <!-- Right Column: Data Health Index -->
+  <div class="col-lg-5">
+    <div class="glass-panel p-4 mb-4">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h3 class="h6 fw-bold text-white mb-0"><i class="bi bi-clipboard2-pulse text-info me-2"></i>Data Health Index</h3>
+        <span id="reportStatusBadge" class="badge bg-secondary font-mono">Awaiting Telemetry</span>
+      </div>
+
+      <div id="emptyValidationNotice" class="text-center py-5 text-muted small">
+        <i class="bi bi-search display-6 d-block mb-2" style="color: var(--text-mut); opacity: .5;"></i>
+        Select or drag a file to compute validation metrics and data quality ratings.
+      </div>
+
+      <div id="validationReportContent" style="display: none;">
+        <!-- Circular Health Rating -->
+        <div class="glass-panel p-3 mb-3 text-center border-info border-opacity-25" style="background: rgba(255, 255, 255, 0.03);">
+          <div class="text-secondary small fw-bold font-mono mb-1">EMPIRICAL DATA HEALTH</div>
+          <div class="counter-anim display-5 fw-bold text-white mb-1" id="valQualityScore" data-target="0">0</div>
+          <span class="badge bg-success px-3 py-1 font-mono" id="valQualityRating">Optimal Health</span>
+        </div>
+
+        <div class="health-meter-row small font-mono mb-3">
+          <div class="hm-item">
+            <div class="hm-val text-white" id="valRecReceived">0</div>
+            <div class="hm-label">RECORDS</div>
+          </div>
+          <div class="hm-item">
+            <div class="hm-val text-success" id="valRecValid">0</div>
+            <div class="hm-label">VALID</div>
+          </div>
+          <div class="hm-item">
+            <div class="hm-val text-danger" id="valRecInvalid">0</div>
+            <div class="hm-label">REJECTED</div>
+          </div>
+          <div class="hm-item">
+            <div class="hm-val text-warning" id="valRecDuplicates">0</div>
+            <div class="hm-label">DUPLICATE</div>
+          </div>
+          <div class="hm-item">
+            <div class="hm-val text-danger" id="valRecNegative">0</div>
+            <div class="hm-label">NEGATIVE</div>
+          </div>
+        </div>
+
+        <div id="valLogBox" class="p-2 mb-3 rounded font-mono" style="background: rgba(0,0,0,0.5); max-height: 130px; overflow-y: auto; font-size: 11px;"></div>
+
+        <button type="button" class="btn btn-holo w-100 py-2 fw-bold" id="proceedBtn" onclick="commitUploadAndProcess()">
+          <i class="bi bi-play-circle-fill me-1"></i> Ingest Validated Telemetry
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentSelectedFile = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) handleFileSelected(e.dataTransfer.files[0]);
+  });
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) handleFileSelected(e.target.files[0]);
+  });
+});
+
+function handleFileSelected(file) {
+  currentSelectedFile = file;
+  document.getElementById('fileNameDisplay').textContent = file.name;
+  const sizeKb = (file.size / 1024).toFixed(1);
+  document.getElementById('fileMetaDisplay').textContent = `${sizeKb} KB • ${file.type || 'spreadsheet'}`;
+  document.getElementById('fileInfoBanner').style.display = 'block';
+  document.getElementById('validateUploadBtn').disabled = false;
+  startValidation();
+}
+
+function clearSelectedFile() {
+  currentSelectedFile = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileInfoBanner').style.display = 'none';
+  document.getElementById('validateUploadBtn').disabled = true;
+  document.getElementById('validationReportContent').style.display = 'none';
+  document.getElementById('emptyValidationNotice').style.display = 'block';
+  document.getElementById('reportStatusBadge').textContent = 'Awaiting Telemetry';
+  document.getElementById('reportStatusBadge').className = 'badge bg-secondary font-mono';
+}
+
+async function startValidation() {
+  if (!currentSelectedFile) return;
+  const formData = new FormData();
+  formData.append('file', currentSelectedFile);
+
+  const progContainer = document.getElementById('uploadProgressContainer');
+  const progBar = document.getElementById('pipelineProgressBar');
+  const progText = document.getElementById('pipelineStepText');
+  const progPct = document.getElementById('pipelineStepPct');
+
+  progContainer.style.display = 'block';
+  progBar.style.width = '35%';
+  progText.textContent = 'Parsing schema headers...';
+  progPct.textContent = '35%';
+
+  try {
+    const res = await fetch('/api/validate', { method: 'POST', body: formData });
+    const result = await res.json();
+
+    progBar.style.width = '100%';
+    progPct.textContent = '100%';
+    setTimeout(() => { progContainer.style.display = 'none'; }, 500);
+
+    if (result.status === 'success' || result.status === 'invalid') {
+      displayValidationReport(result.report, result.is_valid);
+    } else {
+      showToast('Validation Error', result.message, 'danger');
+    }
+  } catch (err) {
+    progContainer.style.display = 'none';
+    showToast('Network Error', 'Failed to communicate with validation service.', 'danger');
+  }
+}
+
+function displayValidationReport(report, isValid) {
+  document.getElementById('emptyValidationNotice').style.display = 'none';
+  document.getElementById('validationReportContent').style.display = 'block';
+
+  setCounters('valRecReceived', report.records_received);
+  setCounters('valRecValid', report.valid_records);
+  setCounters('valRecInvalid', report.invalid_records);
+  setCounters('valRecDuplicates', report.duplicates);
+  setCounters('valRecNegative', report.negative_values);
+  setCounters('valQualityScore', report.data_quality_score);
+
+  const ratingEl = document.getElementById('valQualityRating');
+  ratingEl.textContent = report.data_quality_rating;
+  ratingEl.className = (report.data_quality_rating === 'Excellent' || report.data_quality_rating === 'Good')
+    ? 'badge bg-success px-3 py-1 font-mono' : 'badge bg-warning text-dark px-3 py-1 font-mono';
+
+  const badgeEl = document.getElementById('reportStatusBadge');
+  if (isValid) {
+    badgeEl.textContent = 'Validated';
+    badgeEl.className = 'badge bg-success font-mono';
+    document.getElementById('proceedBtn').disabled = false;
+  } else {
+    badgeEl.textContent = 'Errors Detected';
+    badgeEl.className = 'badge bg-danger font-mono';
+    document.getElementById('proceedBtn').disabled = true;
+  }
+
+  const logBox = document.getElementById('valLogBox');
+  let logHtml = '';
+  (report.errors || []).forEach(e => {
+    logHtml += `<div class="text-danger mb-1"><i class="bi bi-x-circle-fill me-1"></i> ${e}</div>`;
+  });
+  (report.warnings || []).forEach(w => {
+    logHtml += `<div class="text-warning mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> ${w}</div>`;
+  });
+  if (!report.errors.length && !report.warnings.length) {
+    logHtml = `<div class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Telemetry conforms to AquaGuard schema specifications.</div>`;
+  }
+  logBox.innerHTML = logHtml;
+}
+
+function setCounters(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.setAttribute('data-target', val);
+  initCounters();
+}
+
+async function commitUploadAndProcess() {
+  if (!currentSelectedFile) return;
+
+  const pipe = showPipeline([
+    'PARSING TIMESTAMPS & GEOSPATIAL COORDS',
+    'DEDUPLICATING & IMPUTING MISSING VALUES',
+    'COMPUTING 7-DAY ROLLING ENVELOPES',
+    'PARTITIONING MULTI-LAG ISOLATION FORESTS',
+    'FORMULATING ROOT CAUSE HYPOTHESES',
+    'SYNCHRONIZING WATER INTELLIGENCE CORE'
+  ], 'INGESTING TELEMETRY');
+  const ticker = setInterval(() => { if (pipe && !pipe.done) pipe.advance(); }, 480);
+
+  const formData = new FormData();
+  formData.append('file', currentSelectedFile);
+
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const result = await res.json();
+    clearInterval(ticker);
+
+    if (result.status === 'success') {
+      if (pipe) pipe.advance();
+      showToast('Ingestion Complete', `${result.records_processed} readings analyzed. ${result.anomalies_detected} anomalies detected.`, 'success');
+      setTimeout(() => {
+        if (pipe) pipe.close();
+        navigateLiquid('/dashboard');
+      }, 900);
+    } else {
+      if (pipe) pipe.close();
+      showToast('Upload Error', result.message || 'Processing failed', 'danger');
+    }
+  } catch (err) {
+    clearInterval(ticker);
+    if (pipe) pipe.close();
+    showToast('Network Error', 'Error executing pipeline', 'danger');
+  }
+}
+</script>
+{% endblock %}

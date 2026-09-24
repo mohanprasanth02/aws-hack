@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+
+{% block title %}Live Telemetry & Risk Simulation — AquaGuard AI{% endblock %}
+
+{% block content %}
+<!-- ============================================================
+     LIVE TELEMETRY — PAGE HEADER
+     ============================================================ -->
+<div class="glass-panel p-4 mb-3 aq-page-head">
+  <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+    <div>
+      <h3 class="h5 fw-bold text-white mb-1">
+        <i class="bi bi-activity text-info me-2"></i>Live Water Telemetry
+      </h3>
+      <p class="text-secondary small mb-0">Simulated real-time meter network feeding the AquaGuard single reading into the full hybrid risk pipeline per packet.</p>
+    </div>
+    <div class="text-end">
+      <span class="map-live-chip map-live-chip-on" id="simStatusChip"><span class="live-dot ok" id="simStatusDot"></span><span id="simStateLabel">LIVE STREAMING ACTIVE</span></span>
+      <div class="text-info small font-mono mt-1">SIM TIME <span id="simTime">--:--:--</span> · ELAPSED <span id="simElapsed">0s</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     CRITICAL ALERT BANNER
+     ============================================================ -->
+<div class="crit-banner" id="critBanner" role="alert" style="display:none;">
+  <div class="crit-banner-inner">
+    <span class="crit-pulse"><i class="bi bi-exclamation-triangle-fill"></i></span>
+    <div class="crit-text">
+      <strong id="critHeadline">CRITICAL EVENT DETECTED</strong>
+      <span id="critMeterLine">—</span>
+    </div>
+    <button type="button" class="aq-btn aq-btn-danger" id="btnCritView"><i class="bi bi-crosshair me-1"></i> View Risk</button>
+    <button type="button" class="aq-btn aq-btn-ghost" id="btnCritAck"><i class="bi bi-check2 me-1"></i> Acknowledge</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     CONTROL CONSOLE
+     ============================================================ -->
+<div class="glass-panel p-4 mb-3">
+  <div class="aq-tele-head">
+    <strong>Simulation Control</strong>
+    <span class="badge-tag"><span class="live-dot ok me-1"></span>CONTINUOUS AUTO-STREAMING — Database Linked</span>
+  </div>
+
+  <div class="row g-3 mt-1">
+    <div class="col-lg-8">
+      <div class="row g-2">
+        <div class="col-sm-6 col-lg-3">
+          <label class="aq-tele-label" for="selMode">Data Mode</label>
+          <select id="selMode" class="fs fs-wide" aria-label="Telemetry data mode">
+            <option value="scenario" selected>Scenario Injections</option>
+            <option value="synthetic">Synthetic Live</option>
+            <option value="replay">Historical Replay</option>
+          </select>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <label class="aq-tele-label" for="selSpeed">Speed</label>
+          <select id="selSpeed" class="fs fs-wide" aria-label="Simulation speed">
+            <option value="1">1x</option>
+            <option value="2">2x</option>
+            <option value="5" selected>5x</option>
+            <option value="10">10x</option>
+          </select>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <label class="aq-tele-label" for="selScenario">Scenario</label>
+          <select id="selScenario" class="fs fs-wide" aria-label="Simulation scenario">
+            <option value="mixed_risks" selected>Mixed Risks (All Types)</option>
+            <option value="normal">Normal Baseline</option>
+            <option value="busy_day">Busy Day Surge</option>
+            <option value="sudden_spike">Sudden Spike</option>
+            <option value="sudden_drop">Sudden Drop</option>
+            <option value="persistent_high">Persistent High</option>
+            <option value="night_flow">Night Flow</option>
+            <option value="gradual_increase">Gradual Increase</option>
+            <option value="repeated_anomaly">Repeated Anomaly</option>
+            <option value="meter_error">Meter Error</option>
+            <option value="extreme">Extreme Event</option>
+          </select>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <label class="aq-tele-label">&nbsp;</label>
+          <div class="aq-btn-row align-items-center">
+            <span class="tele-live-pill"><span class="live-dot ok"></span> AUTO-LIVE</span>
+            <button type="button" class="aq-btn aq-btn-ghost btn-sm" id="btnResyncDb" title="Resync meters and telemetry from database"><i class="bi bi-arrow-repeat me-1"></i> Resync</button>
+            <button type="button" class="aq-btn aq-btn-ghost btn-sm" id="btnSave" title="Save simulation snapshot to database"><i class="bi bi-save me-1"></i> Save</button>
+            <button type="button" id="btnStart" style="display:none;"></button>
+            <button type="button" id="btnPause" style="display:none;"></button>
+            <button type="button" id="btnReset" style="display:none;"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="aq-preset-box">
+        <span class="badge-tag">QUICK PRESETS</span>
+        <div class="aq-btn-row mt-2">
+          <button type="button" class="aq-btn aq-btn-holo" data-preset="showcase"><i class="bi bi-stars me-1"></i> Demo Showcase</button>
+          <button type="button" class="aq-btn" data-preset="night"><i class="bi bi-moon-stars me-1"></i> Night</button>
+          <button type="button" class="aq-btn" data-preset="burst"><i class="bi bi-tornado me-1"></i> Burst</button>
+        </div>
+        <div class="aq-btn-row mt-2">
+          <button type="button" class="aq-btn aq-btn-danger" id="btnTriggerCritical"><i class="bi bi-radioactive me-1"></i> Trigger Critical</button>
+          <select id="selTriggerRisk" class="fs" aria-label="Simulate risk type">
+            <option value="sudden_spike">Sudden Spike</option>
+            <option value="persistent_high">Persistent High</option>
+            <option value="night_flow">Night Flow</option>
+            <option value="sudden_drop">Sudden Drop</option>
+            <option value="meter_error">Meter Error</option>
+            <option value="extreme">Extreme Event</option>
+          </select>
+          <button type="button" class="aq-btn aq-btn-ghost" id="btnTriggerRisk" title="Apply selected risk to a meter"><i class="bi bi-lightning-charge-fill"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-2 mt-2 aq-tele-stats">
+    <div class="col-6 col-md-3"><div class="ts-cell"><div class="ts-num" id="statReadings">0</div><div class="ts-cap">READINGS</div></div></div>
+    <div class="col-6 col-md-3"><div class="ts-cell"><div class="ts-num text-warning" id="statAnomalies">0</div><div class="ts-cap">ANOMALIES</div></div></div>
+    <div class="col-6 col-md-3"><div class="ts-cell"><div class="ts-num text-danger" id="statCritical">0</div><div class="ts-cap">CRITICAL</div></div></div>
+    <div class="col-6 col-md-3"><div class="ts-cell"><div class="ts-num text-info" id="statDQ">0</div><div class="ts-cap">DQ EVENTS</div></div></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     LIVE TELEMETRY STREAM
+     ============================================================ -->
+<div class="glass-panel p-3 mb-3">
+  <div class="d-flex align-items-center justify-content-between mb-2">
+    <strong class="aq-tele-title"><span class="live-dot ok me-2"></span>Live Telemetry Stream</strong>
+    <span class="text-secondary small font-mono">newest first</span>
+  </div>
+  <div class="aq-stream" id="streamList" aria-live="polite"></div>
+</div>
+
+<!-- ============================================================
+     MAIN GRID — NETWORK / CHART  |  RISK / EVENTS / EVAL / HISTORY
+     ============================================================ -->
+<div class="row g-3 mb-4">
+  <div class="col-xl-8">
+    <!-- METER NETWORK -->
+    <div class="glass-panel p-3 mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <strong class="aq-tele-title"><i class="bi bi-diagram-3 text-info me-2"></i>Live Meter Network</strong>
+        <span class="text-secondary small font-mono" id="metersCountLabel">0 meters</span>
+      </div>
+      <div class="aq-table-wrap">
+        <table class="table table-dark table-hover aq-table mb-0">
+          <thead>
+            <tr>
+              <th>Meter</th><th>Location</th><th>Current</th><th>Baseline</th>
+              <th>Deviation</th><th>Risk</th><th>Status</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="metersTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LIVE CHART -->
+    <div class="glass-panel p-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+        <strong class="aq-tele-title"><i class="bi bi-graph-up-arrow text-info me-2"></i>Live Flow Chart</strong>
+        <div class="d-flex gap-2 align-items-center">
+          <select id="selChartMeter" class="fs" aria-label="Chart meter"></select>
+          <select id="selChartWindow" class="fs" aria-label="Chart window">
+            <option value="30">30 pts</option>
+            <option value="60" selected>60 pts</option>
+            <option value="100">100 pts</option>
+          </select>
+          <span class="aq-flow" id="flowVisual" title="Simulated flow vs baseline">
+            <span class="aq-flow-fill" id="flowFill"></span>
+          </span>
+          <span class="small font-mono" id="flowLabel">FLOW —</span>
+        </div>
+      </div>
+      <div class="aq-chart-box">
+        <canvas id="teleChart" aria-label="Live flow chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <!-- RISK COUNTERS -->
+    <div class="glass-panel p-3 mb-3">
+      <strong class="aq-tele-title mb-2 d-block"><i class="bi bi-pie-chart-fill text-info me-2"></i>Meter Risk Profile</strong>
+      <div class="aq-risk-grid">
+        <div class="rc rc-blue"><div class="rc-num" id="countersNormal">0</div><div class="rc-cap">NORMAL</div></div>
+        <div class="rc rc-amber"><div class="rc-num" id="countersModerate">0</div><div class="rc-cap">MODERATE</div></div>
+        <div class="rc rc-orange"><div class="rc-num" id="countersHigh">0</div><div class="rc-cap">HIGH</div></div>
+        <div class="rc rc-red"><div class="rc-num" id="countersCritical">0</div><div class="rc-cap">CRITICAL</div></div>
+      </div>
+    </div>
+
+    <!-- DATA QUALITY -->
+    <div class="glass-panel p-3 mb-3">
+      <strong class="aq-tele-title mb-2 d-block"><i class="bi bi-hdd-network text-info me-2"></i>Data Quality Console</strong>
+      <ul class="aq-dq-list" id="dqList"><li class="text-secondary small">No data quality events yet.</li></ul>
+    </div>
+
+    <!-- LIVE RISK EVENTS -->
+    <div class="glass-panel p-3 mb-3">
+      <strong class="aq-tele-title mb-2 d-block"><i class="bi bi-exclamation-triangle text-info me-2"></i>Live Risk Events <span class="badge-tag" id="eventsCount">0</span></strong>
+      <div class="aq-events" id="eventsList">
+        <div class="text-secondary small py-2"><span class="spinner-border spinner-border-sm me-2 text-info" role="status"></span>Connecting to live risk telemetry feed…</div>
+      </div>
+    </div>
+
+    <!-- EVALUATION -->
+    <div class="glass-panel p-3 mb-3">
+      <strong class="aq-tele-title mb-2 d-block"><i class="bi bi-cpu text-info me-2"></i>Live Detection Evaluation</strong>
+      <div class="aq-eval-grid" id="evalGrid">
+        <div class="eg-cell"><div class="eg-num" id="evalPrec">—</div><div class="eg-cap">PRECISION</div></div>
+        <div class="eg-cell"><div class="eg-num" id="evalRec">—</div><div class="eg-cap">RECALL</div></div>
+        <div class="eg-cell"><div class="eg-num" id="evalF1">—</div><div class="eg-cap">F1</div></div>
+        <div class="eg-cell"><div class="eg-num text-warning" id="evalTotal">—</div><div class="eg-cap">SAMPLES</div></div>
+      </div>
+      <div class="small text-secondary font-mono mt-2" id="evalDetail">Waiting for data…</div>
+      <div class="small text-secondary font-mono">Detection latency: <span class="text-info" id="evalLatency">—</span></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="glass-panel p-3">
+      <strong class="aq-tele-title mb-2 d-block"><i class="bi bi-clock-history text-info me-2"></i>Simulation History</strong>
+      <div class="aq-history-wrap">
+        <table class="table table-dark table-hover aq-table mb-0">
+          <thead>
+            <tr><th>Run</th><th>Mode</th><th>Readings</th><th>Anom</th><th>Recall</th></tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="5" class="text-secondary small">No saved runs yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     RISK INTELLIGENCE DRAWER (right fly-out)
+     ============================================================ -->
+<div class="rx-backdrop" id="rxBackdrop" style="display:none;"></div>
+<aside class="rx-drawer" id="riskDrawer" aria-label="Risk intelligence drawer" aria-hidden="true">
+  <div class="rx-head">
+    <div>
+      <strong class="aq-tele-title d-block"><i class="bi bi-radar text-info me-2"></i>Risk Intelligence</strong>
+      <span class="text-secondary small font-mono" id="drawerMeter">—</span>
+    </div>
+    <button type="button" class="aq-icon-btn" id="btnCloseDrawer" aria-label="Close drawer"><i class="bi bi-x-lg"></i></button>
+  </div>
+
+  <div class="rx-body">
+    <div class="rx-kicker" id="drawerType">Anomaly</div>
+    <div class="rx-facts">
+      <div><span>Location</span><b id="drawerLoc">—</b></div>
+      <div><span>Time</span><b id="drawerTime">—</b></div>
+      <div><span>Severity</span><b id="drawerSeverity">—</b></div>
+      <div><span>Risk Score</span><b id="drawerScore">—</b></div>
+      <div><span>Current Usage</span><b id="drawerUsage">—</b></div>
+      <div><span>Expected</span><b id="drawerExpected">—</b></div>
+      <div><span>Deviation</span><b id="drawerDev">—</b></div>
+      <div><span>Z-Score</span><b id="drawerZ">—</b></div>
+      <div><span>Detection Methods</span><b id="drawerMethodLabel">—</b></div>
+    </div>
+
+    <div class="rx-sec">
+      <strong class="rx-sec-title"><i class="bi bi-flower1 me-1"></i>Possible Causes</strong>
+      <ul class="rx-list" id="drawerCauses"><li class="text-secondary small">—</li></ul>
+    </div>
+    <div class="rx-sec">
+      <strong class="rx-sec-title"><i class="bi bi-clock-history me-1"></i>Evidence</strong>
+      <ul class="rx-list" id="drawerEvidence"><li class="text-secondary small">—</li></ul>
+    </div>
+    <div class="rx-sec">
+      <strong class="rx-sec-title"><i class="bi bi-lightbulb me-1"></i>Recommended Actions</strong>
+      <ul class="rx-list" id="drawerRecs"><li class="text-secondary small">—</li></ul>
+    </div>
+  </div>
+
+  <div class="rx-actions">
+    <button type="button" class="aq-btn" id="btnLocate"><i class="bi bi-geo-alt-fill me-1"></i> Locate on Map</button>
+    <button type="button" class="aq-btn aq-btn-ghost" id="btnInvestigate"><i class="bi bi-search me-1"></i> Open Investigation</button>
+    <button type="button" class="aq-btn aq-btn-ok" id="btnAck"><i class="bi bi-check2-circle me-1"></i> Acknowledge</button>
+    <button type="button" class="aq-btn aq-btn-danger" id="btnResolve"><i class="bi bi-check2-all me-1"></i> Resolve</button>
+  </div>
+</aside>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Meters injected from server registry for the quick-risk trigger dropdown.
+  window.__AQUA_METERS = {{ meters | map(attribute='meter_id') | list | tojson if meters else [] }};
+</script>
+<script src="{{ url_for('static', filename='js/telemetry.js') }}"></script>
+{% endblock %}

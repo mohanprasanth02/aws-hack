@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Pipeline Lineage & Execution Logs — AquaGuard AI{% endblock %}
+
+{% block content %}
+<div class="glass-panel p-4 mb-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h3 class="h5 fw-bold text-white mb-1"><i class="bi bi-journal-code text-info me-2"></i>Analysis Execution Lineage Logs</h3>
+      <p class="text-secondary small mb-0">Empirical audit trail recording data inputs, pipeline run parameters, and algorithm execution metrics.</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="holo-table">
+      <thead>
+        <tr>
+          <th>Execution Code</th>
+          <th>Source Telemetry</th>
+          <th>Run Timestamp</th>
+          <th>Observations</th>
+          <th>Anomalies</th>
+          <th>Critical</th>
+          <th>Duration</th>
+          <th>Data Health</th>
+          <th>State</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if runs %}
+          {% for r in runs %}
+          <tr>
+            <td><code class="text-info fw-bold font-mono">{{ r.run_code }}</code></td>
+            <td><span class="text-white">{{ r.filename }}</span></td>
+            <td><small class="text-secondary font-mono">{{ r.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</small></td>
+            <td><strong class="font-mono text-white">{{ r.records_count }}</strong></td>
+            <td><span class="text-warning fw-bold font-mono">{{ r.anomalies_found }}</span></td>
+            <td><span class="pill-severity {% if r.critical_count > 0 %}pill-critical{% else %}pill-normal{% endif %}">{{ r.critical_count }}</span></td>
+            <td><small class="text-secondary font-mono">{{ r.execution_time_seconds }}s</small></td>
+            <td>
+              <span class="badge {% if r.data_quality_score >= 85 %}bg-success{% elif r.data_quality_score >= 60 %}bg-warning text-dark{% else %}bg-danger{% endif %} font-mono">
+                {{ r.data_quality_score }}%
+              </span>
+            </td>
+            <td><span class="badge bg-secondary font-mono" style="font-size: 10px;">{{ r.status }}</span></td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="9" class="text-center py-5 text-muted">
+              No analysis pipeline execution logs recorded yet.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

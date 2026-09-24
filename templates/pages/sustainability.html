@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block title %}Water Impact Center — AquaGuard AI{% endblock %}
+
+{% block content %}
+<!-- Top Impact Center Hero -->
+<div class="glass-panel p-4 mb-4 holo-border-travel">
+  <div class="row align-items-center g-4">
+    <div class="col-md-4 text-center border-end border-secondary border-opacity-15">
+      <div class="text-secondary small fw-bold font-mono mb-1">AQUAGUARD SUSTAINABILITY INDEX</div>
+      <div class="display-3 fw-bold text-success mb-0" id="sustScoreDisplay">--</div>
+      <div class="h5 fw-bold text-white mt-1" id="sustTierDisplay">Evaluating...</div>
+      <span class="badge bg-success px-3 py-1 font-mono" id="sustGradeBadge">Grade A</span>
+    </div>
+
+    <div class="col-md-8 ps-md-4">
+      <h3 class="h5 fw-bold text-white mb-2" style="font-family: 'Space Grotesk';">Water Stewardship & Carbon Balance</h3>
+      <p class="text-secondary small mb-3">
+        Algorithmic ESG sustainability index evaluating variance stability, nocturnal flow containment, excess departures, and week-over-week conservation progress.
+      </p>
+
+      <div class="row g-3">
+        <div class="col-sm-4">
+          <div class="p-3 rounded bg-dark border border-secondary border-opacity-25 text-center">
+            <span class="text-muted d-block small font-mono">ESTIMATED EXCESS</span>
+            <strong class="text-warning h5 mb-0" id="sustExcessLiters">0 L</strong>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="p-3 rounded bg-dark border border-secondary border-opacity-25 text-center">
+            <span class="text-muted d-block small font-mono">REMEDIAL POTENTIAL</span>
+            <strong class="text-white h5 mb-0" id="sustExcessCost">$0.00</strong>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="p-3 rounded bg-dark border border-secondary border-opacity-25 text-center">
+            <span class="text-muted d-block small font-mono">EMBEDDED CO2</span>
+            <strong class="text-info h5 mb-0" id="sustCarbonKg">0 kg</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Factor Decomposition Breakdown -->
+<div class="glass-panel p-4 mb-4">
+  <h3 class="h6 fw-bold text-white mb-1"><i class="bi bi-diagram-2 text-info me-2"></i>Contributing Factor Decomposition</h3>
+  <p class="text-secondary small mb-4">Transparent algorithmic breakdown measuring performance across each operational pillar.</p>
+
+  <div class="row g-4">
+    <!-- Factor 1 -->
+    <div class="col-md-6 col-lg-4">
+      <div class="glass-panel p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <strong class="text-white small">Anomaly Performance</strong>
+          <span class="badge bg-secondary font-mono">25%</span>
+        </div>
+        <div class="h4 text-info fw-bold mb-2 font-mono" id="factorScoreAnomaly">-- / 100</div>
+        <div class="progress mb-2" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 6px;">
+          <div class="progress-bar bg-info" id="factorBarAnomaly" style="width: 0%;"></div>
+        </div>
+        <small class="text-secondary d-block">Departure frequency relative to baseline flow.</small>
+      </div>
+    </div>
+
+    <!-- Factor 2 -->
+    <div class="col-md-6 col-lg-4">
+      <div class="glass-panel p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <strong class="text-white small">Consumption Stability</strong>
+          <span class="badge bg-secondary font-mono">20%</span>
+        </div>
+        <div class="h4 text-info fw-bold mb-2 font-mono" id="factorScoreStability">-- / 100</div>
+        <div class="progress mb-2" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 6px;">
+          <div class="progress-bar bg-info" id="factorBarStability" style="width: 0%;"></div>
+        </div>
+        <small class="text-secondary d-block">Coefficient of variance smoothness across diurnal cycles.</small>
+      </div>
+    </div>
+
+    <!-- Factor 3 -->
+    <div class="col-md-6 col-lg-4">
+      <div class="glass-panel p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <strong class="text-white small">Excess Water Control</strong>
+          <span class="badge bg-secondary font-mono">25%</span>
+        </div>
+        <div class="h4 text-info fw-bold mb-2 font-mono" id="factorScoreExcess">-- / 100</div>
+        <div class="progress mb-2" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 6px;">
+          <div class="progress-bar bg-info" id="factorBarExcess" style="width: 0%;"></div>
+        </div>
+        <small class="text-secondary d-block">Minimization of volume lost beyond baseline thresholds.</small>
+      </div>
+    </div>
+
+    <!-- Factor 4 -->
+    <div class="col-md-6 col-lg-6">
+      <div class="glass-panel p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <strong class="text-white small">Night Usage Containment</strong>
+          <span class="badge bg-secondary font-mono">15%</span>
+        </div>
+        <div class="h4 text-info fw-bold mb-2 font-mono" id="factorScoreNight">-- / 100</div>
+        <div class="progress mb-2" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 6px;">
+          <div class="progress-bar bg-info" id="factorBarNight" style="width: 0%;"></div>
+        </div>
+        <small class="text-secondary d-block">Overnight quiet-hours flow minimization (22:00–06:00).</small>
+      </div>
+    </div>
+
+    <!-- Factor 5 -->
+    <div class="col-md-6 col-lg-6">
+      <div class="glass-panel p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <strong class="text-white small">Trend Improvement</strong>
+          <span class="badge bg-secondary font-mono">15%</span>
+        </div>
+        <div class="h4 text-info fw-bold mb-2 font-mono" id="factorScoreTrend">-- / 100</div>
+        <div class="progress mb-2" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 6px;">
+          <div class="progress-bar bg-info" id="factorBarTrend" style="width: 0%;"></div>
+        </div>
+        <small class="text-secondary d-block">Week-over-week progression towards lower volumetric footprint.</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Non-Statutory Disclaimer -->
+<div class="p-3 rounded glass-panel text-muted small border-secondary border-opacity-15 font-mono">
+  <i class="bi bi-info-circle text-info me-1"></i>
+  <strong>Platform Transparency Notice:</strong> The AquaGuard Sustainability Score is an algorithmic heuristic formulated for proactive facility management and conservation planning, not an accredited statutory environmental certificate.
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  loadSustainabilityData();
+});
+
+async function loadSustainabilityData() {
+  try {
+    const res = await fetch('/api/sustainability');
+    const data = await res.json();
+
+    if (data.status === 'success') {
+      const d = data.data;
+      document.getElementById('sustScoreDisplay').textContent = d.sustainability_score.toFixed(0);
+      document.getElementById('sustTierDisplay').textContent = d.tier;
+      document.getElementById('sustGradeBadge').textContent = `Grade ${d.grade}`;
+
+      document.getElementById('sustExcessLiters').textContent = `${d.metrics.estimated_excess_liters.toLocaleString()} L`;
+      document.getElementById('sustExcessCost').textContent = `$${d.metrics.estimated_excess_cost.toFixed(2)}`;
+      document.getElementById('sustCarbonKg').textContent = `${d.metrics.estimated_co2_kg.toFixed(1)} kg CO2`;
+
+      setFactor('Anomaly', d.factors.anomaly_frequency.score);
+      setFactor('Stability', d.factors.consumption_stability.score);
+      setFactor('Excess', d.factors.excess_water_control.score);
+      setFactor('Night', d.factors.nighttime_efficiency.score);
+      setFactor('Trend', d.factors.trend_improvement.score);
+    }
+  } catch (e) {
+    showToast('Notice', 'Unable to retrieve sustainability metrics', 'warning');
+  }
+}
+
+function setFactor(key, score) {
+  const scoreEl = document.getElementById(`factorScore${key}`);
+  const barEl = document.getElementById(`factorBar${key}`);
+  if (scoreEl && barEl) {
+    scoreEl.textContent = `${score.toFixed(0)} / 100`;
+    barEl.style.width = `${Math.min(100, Math.max(0, score))}%`;
+  }
+}
+</script>
+{% endblock %}

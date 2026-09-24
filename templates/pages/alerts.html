@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Operational Incident Matrix — AquaGuard AI{% endblock %}
+
+{% block content %}
+<!-- Quick Filter Pills -->
+<div class="glass-panel p-3 mb-4">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{{ url_for('main.alerts') }}" class="btn btn-sm {% if not selected_severity and not selected_status %}btn-holo{% else %}btn-holo-alt{% endif %}">ALL INCIDENTS</a>
+      <a href="{{ url_for('main.alerts', severity='Critical') }}" class="btn btn-sm {% if selected_severity == 'Critical' %}btn-holo text-danger border-danger{% else %}btn-holo-alt text-danger{% endif %}">CRITICAL</a>
+      <a href="{{ url_for('main.alerts', severity='High') }}" class="btn btn-sm {% if selected_severity == 'High' %}btn-holo text-warning border-warning{% else %}btn-holo-alt text-warning{% endif %}">HIGH</a>
+      <a href="{{ url_for('main.alerts', status='Active') }}" class="btn btn-sm {% if selected_status == 'Active' %}btn-holo{% else %}btn-holo-alt{% endif %}">ACTIVE / UNRESOLVED</a>
+      <a href="{{ url_for('main.alerts', status='Resolved') }}" class="btn btn-sm {% if selected_status == 'Resolved' %}btn-holo-eco{% else %}btn-holo-alt text-success{% endif %}">RESOLVED</a>
+    </div>
+
+    <div class="text-secondary small font-mono">
+      <span>Active Registry:</span> <strong class="text-white">{{ alerts|length }}</strong> events
+    </div>
+  </div>
+</div>
+
+<!-- Holographic Alert Cards Grid -->
+<div class="row g-3 mb-4">
+  {% if alerts %}
+    {% for a in alerts %}
+    <div class="col-md-6 col-lg-4" id="alertCard_{{ a.id }}">
+      <div class="glass-panel p-4 h-100 border-{{ 'danger' if a.severity == 'Critical' else ('warning' if a.severity == 'High' else 'secondary') }} border-opacity-30 d-flex flex-column justify-content-between {% if a.severity == 'Critical' %}holo-border-travel{% endif %}">
+        <div>
+          <!-- Header -->
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="pill-severity pill-{{ a.severity.lower() }}">{{ a.severity }}</span>
+            <span class="badge bg-secondary font-mono" id="alertStatusBadge_{{ a.id }}" style="font-size: 10px;">{{ a.status }}</span>
+          </div>
+
+          <h4 class="h6 fw-bold text-white mb-1" style="font-family: 'Space Grotesk';">{{ a.title }}</h4>
+          <div class="small text-secondary mb-2 font-mono">
+            <i class="bi bi-geo-alt text-info me-1"></i> {{ a.location or 'Campus Facility' }} • <code class="text-info">{{ a.meter_id }}</code>
+          </div>
+          <p class="text-light small mb-3">{{ a.description }}</p>
+        </div>
+
+        <div class="border-top border-secondary border-opacity-15 pt-3 mt-auto">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <small class="text-muted font-mono"><i class="bi bi-clock me-1"></i> {{ a.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+            <span class="small fw-bold font-mono text-{{ 'danger' if a.score > 80 else 'warning' }}">Risk: {{ "%.0f"|format(a.score) }}/100</span>
+          </div>
+
+          <div class="d-flex justify-content-between gap-1">
+            {% if a.anomaly_id %}
+            <a href="{{ url_for('main.anomaly_detail', anomaly_id=a.anomaly_id) }}" class="btn btn-sm btn-holo py-1 px-3" style="font-size: 11px;">
+              Investigate
+            </a>
+            {% endif %}
+
+            <button type="button" class="btn btn-sm btn-holo-alt py-1 px-2" style="font-size: 11px;" onclick="updateAlertStatus({{ a.id }}, 'Acknowledged')">
+              Acknowledge
+            </button>
+            <button type="button" class="btn btn-sm btn-holo-eco py-1 px-2" style="font-size: 11px;" onclick="updateAlertStatus({{ a.id }}, 'Resolved')">
+              Resolve
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="col-12">
+      <div class="glass-panel p-5 text-center text-muted">
+        <i class="bi bi-check-circle-fill text-success fs-1 d-block mb-3"></i>
+        <h4 class="h5 text-white fw-bold">Nominal Operating State</h4>
+        <p class="small mb-0">No active operational alerts registered under the selected criteria.</p>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function updateAlertStatus(alertId, newStatus) {
+  try {
+    const res = await fetch(`/api/alerts/${alertId}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
+    const result = await res.json();
+    if (result.status === 'success') {
+      const badge = document.getElementById(`alertStatusBadge_${alertId}`);
+      if (badge) badge.textContent = result.new_status;
+      showToast('Incident Updated', `Alert state updated to ${result.new_status}`, 'success');
+    }
+  } catch (e) {
+    showToast('Error', 'Failed to update alert state', 'danger');
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}Water Saving Simulator — AquaGuard AI{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+  <!-- Left Column: Interactive Simulation Sliders -->
+  <div class="col-lg-5">
+    <div class="glass-panel p-4 h-100 holo-border-travel">
+      <h3 class="h5 fw-bold text-white mb-2" style="font-family: 'Space Grotesk';">
+        <i class="bi bi-sliders text-info me-2"></i>Water Saving Simulator
+      </h3>
+      <p class="text-secondary small mb-4">Dynamically project volumetric recovery, utility savings, and CO2 reductions by adjusting remediation targets.</p>
+
+      <!-- Slider 1 -->
+      <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <label class="text-secondary small fw-bold font-mono">ANOMALY RESOLUTION TARGET</label>
+          <span class="badge bg-info text-dark fw-bold font-mono" id="sliderValResolution">50%</span>
+        </div>
+        <input type="range" class="form-range" id="sliderResolution" min="0" max="100" step="5" value="50" oninput="runSimulation()">
+        <div class="d-flex justify-content-between text-muted font-mono" style="font-size: 10px;">
+          <span>0% (Status Quo)</span>
+          <span>50% (Standard Fixes)</span>
+          <span>100% (Full Remediation)</span>
+        </div>
+        <small class="text-muted d-block mt-1">Percentage of detected leakage/excess flow eliminated via physical repairs.</small>
+      </div>
+
+      <!-- Slider 2 -->
+      <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <label class="text-secondary small fw-bold font-mono">BASELINE CONSERVATION TARGET</label>
+          <span class="badge bg-success text-white fw-bold font-mono" id="sliderValConservation">10%</span>
+        </div>
+        <input type="range" class="form-range" id="sliderConservation" min="0" max="40" step="1" value="10" oninput="runSimulation()">
+        <div class="d-flex justify-content-between text-muted font-mono" style="font-size: 10px;">
+          <span>0%</span>
+          <span>10% (Target)</span>
+          <span>40% (Aggressive Retrofits)</span>
+        </div>
+        <small class="text-muted d-block mt-1">General behavioral & low-flow fixture conservation across standard baseline.</small>
+      </div>
+
+      <!-- Scenario Presets -->
+      <div class="p-3 rounded border border-secondary border-opacity-15" style="background: rgba(0,0,0,0.4);">
+        <strong class="text-white small d-block mb-2 font-mono">PRESET INTERVENTION SCENARIOS:</strong>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="button" class="btn btn-sm btn-holo-alt" onclick="setPreset(25, 5)">Conservative (25% / 5%)</button>
+          <button type="button" class="btn btn-sm btn-holo-alt" onclick="setPreset(60, 15)">Balanced (60% / 15%)</button>
+          <button type="button" class="btn btn-sm btn-holo" onclick="setPreset(100, 20)">Aggressive (100% / 20%)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Simulated Outcomes & ROI -->
+  <div class="col-lg-7">
+    <div class="glass-panel p-4 h-100">
+      <h3 class="h6 fw-bold text-white mb-2"><i class="bi bi-graph-down-arrow text-success me-2"></i>Simulated Dividends & Carbon Offset</h3>
+      <p class="text-secondary small mb-4">Instantaneous recalculations derived from current database observations.</p>
+
+      <div class="row g-3 mb-4">
+        <div class="col-sm-4">
+          <div class="p-3 rounded bg-dark border border-secondary border-opacity-25 text-center">
+            <span class="text-muted d-block small mb-1 font-mono">WATER RECOVERED</span>
+            <div class="h4 text-info fw-bold mb-0 font-mono" id="simWaterSaved">0 L</div>
+            <small class="text-secondary" id="simPctSaved">0% reduction</small>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="p-3 rounded bg-dark border border-secondary border-opacity-25 text-center">
+            <span class="text-muted d-block small mb-1 font-mono">UTILITY BUDGET SAVED</span>
+            <div class="h4 text-success fw-bold mb-0 font-mono" id="simCostSaved">$0.00</div>
+            <small class="text-secondary font-mono">@ $2.50 / kL</small>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="p-3 rounded bg-dark border border-secondary border-opacity-25 text-center">
+            <span class="text-muted d-block small mb-1 font-mono">CO2 AVOIDED</span>
+            <div class="h4 text-warning fw-bold mb-0 font-mono" id="simCo2Saved">0 kg</div>
+            <small class="text-secondary font-mono">Avoided pumping/treatment</small>
+          </div>
+        </div>
+      </div>
+
+      <div style="height: 230px;" class="mb-3">
+        <canvas id="whatIfCanvas"></canvas>
+      </div>
+
+      <div class="small text-muted border-top border-secondary border-opacity-10 pt-2 font-mono">
+        <i class="bi bi-info-circle me-1 text-info"></i> Notice: All simulated figures are prospective estimates based on historical baseline comparisons.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let whatIfChart = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  runSimulation();
+});
+
+function setPreset(res, cons) {
+  document.getElementById('sliderResolution').value = res;
+  document.getElementById('sliderConservation').value = cons;
+  runSimulation();
+}
+
+async function runSimulation() {
+  const resPct = document.getElementById('sliderResolution').value;
+  const tgtPct = document.getElementById('sliderConservation').value;
+
+  document.getElementById('sliderValResolution').textContent = `${resPct}%`;
+  document.getElementById('sliderValConservation').textContent = `${tgtPct}%`;
+
+  try {
+    const res = await fetch(`/api/what-if?resolution_pct=${resPct}&target_reduction_pct=${tgtPct}`);
+    const data = await res.json();
+
+    if (data.status === 'success') {
+      const s = data.simulation;
+      document.getElementById('simWaterSaved').textContent = `${s.total_potential_reduction_liters.toLocaleString()} L`;
+      document.getElementById('simPctSaved').textContent = `${s.net_reduction_percentage}% net reduction`;
+      document.getElementById('simCostSaved').textContent = `$${s.estimated_cost_saved_usd.toFixed(2)}`;
+      document.getElementById('simCo2Saved').textContent = `${s.estimated_co2_offset_kg.toFixed(1)} kg`;
+
+      renderWhatIfChart(s.current_consumption_liters, s.projected_consumption_liters, s.total_potential_reduction_liters);
+    }
+  } catch (e) {
+    console.error('Simulation error', e);
+  }
+}
+
+function renderWhatIfChart(current, projected, savings) {
+  const ctx = document.getElementById('whatIfCanvas');
+  if (!ctx) return;
+
+  if (whatIfChart) whatIfChart.destroy();
+
+  whatIfChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Current Consumption', 'Projected Consumption', 'Estimated Savings'],
+      datasets: [{
+        label: 'Volume (Liters)',
+        data: [current, projected, savings],
+        backgroundColor: ['rgba(226, 109, 109, 0.7)', 'rgba(255, 255, 255, 0.55)', 'rgba(216, 216, 216, 0.55)'],
+        borderColor: ['#b04d4d', '#ffffff', '#9fa4a8'],
+        borderWidth: 1.5,
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#5f5f5f' } },
+        y: {
+          grid: { color: 'rgba(255, 255, 255, 0.045)' },
+          ticks: {
+            color: '#9b9b9b',
+            callback: value => `${(value / 1000).toFixed(0)}k L`
+          }
+        }
+      }
+    }
+  });
+}
+</script>
+{% endblock %}

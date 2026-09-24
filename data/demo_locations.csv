@@ -1,0 +1,15 @@
+location,building,latitude,longitude,occupancy
+North Campus,Science Complex,37.774649,-122.418499,450
+North Campus,Engineering Tower,37.776547,-122.418988,520
+North Campus,Bio-Tech Research Center,37.774916,-122.416068,340
+Central Quad,Student Union,37.774216,-122.421959,850
+Central Quad,Main Library,37.773765,-122.423075,350
+Central Quad,Dining Commons & Plaza,37.773567,-122.422592,920
+South Campus,Residence Hall Alpha,37.771664,-122.424718,600
+South Campus,Residence Hall Beta,37.770279,-122.423616,580
+South Campus,Athletics & Aquatic Center,37.769712,-122.42563,300
+East Annex,Central Plant & HVAC,37.775528,-122.414815,45
+East Annex,Admin Headquarters,37.774415,-122.416859,220
+East Annex,Data Center Facility,37.774098,-122.413569,60
+West Wing,Innovation & Robotics Hub,37.776609,-122.422305,390
+West Wing,Campus Health & Medical Center,37.77568,-122.425556,420

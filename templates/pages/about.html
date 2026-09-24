@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Architecture & Blueprint (PS-054) — AquaGuard AI{% endblock %}
+
+{% block content %}
+<div class="glass-panel p-4 mb-4 holo-border-travel">
+  <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-secondary border-opacity-15">
+    <div style="width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:24px;color:var(--aqua-1);background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.16), rgba(16,19,22,.92) 62%, rgba(5,6,7,.98));border:1px solid rgba(255,255,255,.35);box-shadow:0 0 28px rgba(255,255,255,.10), inset 0 0 14px rgba(255,255,255,.06);">
+      <i class="bi bi-droplet-half"></i>
+    </div>
+    <div>
+      <h3 class="h5 fw-bold text-white mb-0" style="font-family: 'Space Grotesk';">AquaGuard AI — Environmental Intelligence Architecture</h3>
+      <span class="text-secondary small font-mono">Solution Blueprint for Challenge PS-054 • Zero-Hardware Water Intelligence</span>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <h4 class="h6 fw-bold text-info mb-2 font-mono">1. PROBLEM STATEMENT (PS-054)</h4>
+      <blockquote class="p-3 rounded glass-panel border-info border-opacity-25 text-light small mb-4 font-mono">
+        "Build a dashboard that analyzes manually uploaded meter records, identifies unusual consumption patterns and explains possible causes without hardware integration."
+      </blockquote>
+
+      <h4 class="h6 fw-bold text-info mb-2 font-mono">2. HARDWARE-FREE DATA PIPELINE ARCHITECTURE</h4>
+      <p class="text-secondary small mb-3">
+        AquaGuard AI eliminates the need for expensive flow meters and wireless IoT telemetry nodes by transforming standard facility management spreadsheets into an actionable intelligence system:
+      </p>
+
+      <div class="p-3 rounded mb-4 font-mono" style="background: rgba(0,0,0,0.5); font-size: 11px; color: var(--text-dim); line-height: 1.8;">
+        INGEST (.csv/.xlsx) ➔ DATA HEALTH AUDIT ➔ FEATURE ENGINEERING ➔ 7-DAY ROLLING ENVELOPES ➔ MULTI-ALGORITHM DETECTION ➔ ROOT CAUSE HYPOTHESES ➔ GEOSPATIAL SURVEILLANCE ➔ WHAT-IF SIMULATION ➔ REPORTLAB PDF AUDIT
+      </div>
+
+      <h4 class="h6 fw-bold text-info mb-2 font-mono">3. HYBRID ENSEMBLE METHODOLOGIES</h4>
+      <ul class="text-secondary small mb-4">
+        <li class="mb-2"><strong class="text-white">7-Day Rolling Baseline:</strong> Dynamic temporal window mean and standard deviation per meter.</li>
+        <li class="mb-2"><strong class="text-white">Robust Z-Score:</strong> Departure magnitude safely handling zero-variance floors.</li>
+        <li class="mb-2"><strong class="text-white">Tukey IQR Fences:</strong> Non-parametric quartile ranges resistant to heavy skew.</li>
+        <li class="mb-2"><strong class="text-white">Isolation Forest:</strong> Unsupervised tree partitioning across multi-lag volume vectors.</li>
+        <li><strong class="text-white">AquaGuard Risk Score (0-100):</strong> Calibrated weighted composite synthesizing statistical confidence, departure percentage, and duration persistence.</li>
+      </ul>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="glass-panel p-4 h-100">
+        <h5 class="h6 fw-bold text-white mb-3 font-mono">ENGINEERING STACK</h5>
+        <ul class="list-group list-group-flush bg-transparent small font-mono">
+          <li class="list-group-item bg-transparent text-secondary border-secondary border-opacity-15 d-flex justify-content-between">
+            <span>Framework</span>
+            <strong class="text-white">Flask 3.0</strong>
+          </li>
+          <li class="list-group-item bg-transparent text-secondary border-secondary border-opacity-15 d-flex justify-content-between">
+            <span>Database</span>
+            <strong class="text-white">SQLite / SQLAlchemy</strong>
+          </li>
+          <li class="list-group-item bg-transparent text-secondary border-secondary border-opacity-15 d-flex justify-content-between">
+            <span>Machine Learning</span>
+            <strong class="text-white">Scikit-learn</strong>
+          </li>
+          <li class="list-group-item bg-transparent text-secondary border-secondary border-opacity-15 d-flex justify-content-between">
+            <span>Data Science</span>
+            <strong class="text-white">Pandas, NumPy, SciPy</strong>
+          </li>
+          <li class="list-group-item bg-transparent text-secondary border-secondary border-opacity-15 d-flex justify-content-between">
+            <span>Reporting Engine</span>
+            <strong class="text-white">ReportLab PDF</strong>
+          </li>
+          <li class="list-group-item bg-transparent text-secondary border-secondary border-opacity-15 d-flex justify-content-between">
+            <span>Visualizations</span>
+            <strong class="text-white">Chart.js 4.4</strong>
+          </li>
+          <li class="list-group-item bg-transparent text-secondary border-secondary border-opacity-15 d-flex justify-content-between">
+            <span>Geospatial Map</span>
+            <strong class="text-white">Leaflet.js 1.9</strong>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

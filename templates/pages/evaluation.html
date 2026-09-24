@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}Model Evaluation Matrix — AquaGuard AI{% endblock %}
+
+{% block content %}
+<!-- Header Explanation Banner -->
+<div class="glass-panel p-4 mb-4 holo-border-travel">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-2">
+    <div>
+      <h3 class="h5 fw-bold text-white mb-1"><i class="bi bi-cpu text-info me-2"></i>Machine Learning Performance & Validation Matrix</h3>
+      <p class="text-secondary small mb-0">Empirical benchmark comparing Precision, Recall, F1, and Confusion Matrices across all detection models against verified ground truth.</p>
+    </div>
+    <button type="button" class="btn btn-holo" onclick="runEvaluation()">
+      <i class="bi bi-arrow-clockwise me-1"></i> Re-Calculate Evaluation
+    </button>
+  </div>
+</div>
+
+<!-- Dataset Summary Metrics -->
+<div class="row g-3 mb-4" id="evalSummaryRow" style="display: none;">
+  <div class="col-md-4">
+    <div class="glass-panel p-3 text-center">
+      <div class="text-secondary small fw-bold font-mono">EVALUATED TELEMETRY ROWS</div>
+      <div class="h3 text-white fw-bold mb-0 font-mono" id="evalTotalSamples">0</div>
+      <div class="small text-muted font-mono">Total observations benchmarked</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="glass-panel p-3 text-center">
+      <div class="text-secondary small fw-bold font-mono">KNOWN ANOMALY INCIDENTS</div>
+      <div class="h3 text-warning fw-bold mb-0 font-mono" id="evalTrueAnomalies">0</div>
+      <div class="small text-muted font-mono" id="evalRatePct">0% baseline incidence</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="glass-panel p-3 text-center">
+      <div class="text-secondary small fw-bold font-mono">CHAMPION ALGORITHM</div>
+      <div class="h3 text-success fw-bold mb-0 font-mono" id="evalTopModel">AquaGuard Hybrid</div>
+      <div class="small text-muted font-mono" id="evalTopF1">F1-Score: 0.0%</div>
+    </div>
+  </div>
+</div>
+
+<!-- Model Comparison Table -->
+<div class="glass-panel p-4 mb-4">
+  <h4 class="h6 fw-bold text-white mb-3" style="font-family: 'Space Grotesk';">
+    <i class="bi bi-table text-info me-2"></i>Empirical Algorithm Comparison
+  </h4>
+
+  <div class="table-responsive mb-3">
+    <table class="holo-table" id="evalComparisonTable">
+      <thead>
+        <tr>
+          <th>Algorithm / Method</th>
+          <th>Precision</th>
+          <th>Recall</th>
+          <th>F1-Score</th>
+          <th>Accuracy</th>
+          <th>True Pos (TP)</th>
+          <th>False Pos (FP)</th>
+          <th>False Neg (FN)</th>
+          <th>Detected Total</th>
+        </tr>
+      </thead>
+      <tbody id="evalComparisonBody">
+        <tr>
+          <td colspan="9" class="text-center py-4 text-muted font-mono">Computing empirical metrics...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Confusion Matrices Grid -->
+<div class="glass-panel p-4 mb-4">
+  <h4 class="h6 fw-bold text-white mb-3" style="font-family: 'Space Grotesk';">
+    <i class="bi bi-grid-3x3-gap text-info me-2"></i>Confusion Matrices Matrix
+  </h4>
+  <div class="row g-4" id="confusionMatricesContainer">
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  runEvaluation();
+});
+
+async function runEvaluation() {
+  try {
+    const res = await fetch('/api/evaluation');
+    const data = await res.json();
+
+    if (data.status === 'success') {
+      document.getElementById('evalSummaryRow').style.display = 'flex';
+      document.getElementById('evalTotalSamples').textContent = data.dataset_summary.total_samples.toLocaleString();
+      document.getElementById('evalTrueAnomalies').textContent = data.dataset_summary.ground_truth_anomalies.toLocaleString();
+      document.getElementById('evalRatePct').textContent = `${data.dataset_summary.ground_truth_rate_pct}% ground-truth rate`;
+
+      const top = data.comparison_table[0];
+      document.getElementById('evalTopModel').textContent = top.method;
+      document.getElementById('evalTopF1').textContent = `F1-Score: ${top.f1_score}%`;
+
+      const body = document.getElementById('evalComparisonBody');
+      body.innerHTML = data.comparison_table.map(row => `
+        <tr class="${row.method === 'AquaGuard Hybrid' ? 'holo-border-travel' : ''}">
+          <td>
+            <strong class="${row.method === 'AquaGuard Hybrid' ? 'text-info' : 'text-white'}">${row.method}</strong>
+            ${row.method === 'AquaGuard Hybrid' ? '<span class="badge bg-info text-dark font-mono ms-2" style="font-size: 9px;">Platform Champion</span>' : ''}
+          </td>
+          <td><span class="fw-bold font-mono ${row.precision > 80 ? 'text-success' : 'text-warning'}">${row.precision}%</span></td>
+          <td><span class="fw-bold font-mono ${row.recall > 80 ? 'text-success' : 'text-warning'}">${row.recall}%</span></td>
+          <td><span class="fw-bold text-info font-mono fs-6">${row.f1_score}%</span></td>
+          <td><span class="text-white font-mono">${row.accuracy}%</span></td>
+          <td><span class="badge bg-success font-mono">${row.true_positives}</span></td>
+          <td><span class="badge bg-warning text-dark font-mono">${row.false_positives}</span></td>
+          <td><span class="badge bg-danger font-mono">${row.false_negatives}</span></td>
+          <td><strong class="text-white font-mono">${row.detected_anomalies}</strong></td>
+        </tr>
+      `).join('');
+
+      const cmContainer = document.getElementById('confusionMatricesContainer');
+      cmContainer.innerHTML = data.comparison_table.map(m => `
+        <div class="col-md-6 col-lg-3">
+          <div class="glass-panel p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <strong class="text-white small font-mono">${m.method}</strong>
+              <span class="badge bg-secondary font-mono" style="font-size: 10px;">F1: ${m.f1_score}%</span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-family: 'JetBrains Mono'; font-size: 11px;">
+              <div class="p-2 rounded text-center" style="background: rgba(53, 245, 180, 0.12); border: 1px solid rgba(53, 245, 180, 0.3);">
+                <span class="text-muted d-block" style="font-size: 9px;">TRUE POS</span>
+                <strong class="text-success fs-6">${m.true_positives}</strong>
+              </div>
+              <div class="p-2 rounded text-center" style="background: rgba(255, 176, 32, 0.12); border: 1px solid rgba(255, 176, 32, 0.3);">
+                <span class="text-muted d-block" style="font-size: 9px;">FALSE POS</span>
+                <strong class="text-warning fs-6">${m.false_positives}</strong>
+              </div>
+              <div class="p-2 rounded text-center" style="background: rgba(226, 109, 109, 0.10); border: 1px solid rgba(226, 109, 109, 0.3);">
+                <span class="text-muted d-block" style="font-size: 9px;">FALSE NEG</span>
+                <strong class="text-danger fs-6">${m.false_negatives}</strong>
+              </div>
+              <div class="p-2 rounded text-center" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12);">
+                <span class="text-muted d-block" style="font-size: 9px;">TRUE NEG</span>
+                <strong class="text-info fs-6">${m.true_negatives}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      showToast('Evaluation Notice', data.message || 'No labeled evaluation data present', 'warning');
+    }
+  } catch (err) {
+    showToast('Error', 'Failed to retrieve evaluation results', 'danger');
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Water Future Projections — AquaGuard AI{% endblock %}
+
+{% block content %}
+<!-- Header & Controls -->
+<div class="glass-panel p-4 mb-4">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+    <div>
+      <h3 class="h5 fw-bold text-white mb-1"><i class="bi bi-graph-up-arrow text-success me-2"></i>Water Future — Predictive Demand Engine</h3>
+      <p class="text-secondary small mb-0">Forecast future consumption trajectories with empirical uncertainty confidence bounds.</p>
+    </div>
+  </div>
+
+  <div class="row g-2 align-items-center pt-3 border-top border-secondary border-opacity-10">
+    <div class="col-md-3">
+      <select id="forecastHorizon" class="form-select holo-select" onchange="runForecastQuery()">
+        <option value="7" selected>Horizon: Next 7 Days</option>
+        <option value="30">Horizon: Next 30 Days</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <select id="forecastMethod" class="form-select holo-select" onchange="runForecastQuery()">
+        <option value="exponential_smoothing" selected>Holt-Winters Exponential Smoothing</option>
+        <option value="moving_average">7-Day Weighted Moving Average</option>
+        <option value="random_forest">Random Forest Multi-Lag Regressor</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select id="forecastMeter" class="form-select holo-select" onchange="runForecastQuery()">
+        <option value="">Aggregate Grid (All Facilities)</option>
+        {% for m in meters %}
+        <option value="{{ m.meter_id }}">{{ m.meter_id }} ({{ m.location }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="button" class="btn btn-holo w-100" onclick="runForecastQuery()">
+        <i class="bi bi-arrow-clockwise me-1"></i> Re-Forecast
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Projections Metric Capsules -->
+<div class="row g-3 mb-4" id="forecastMetricsRow" style="display: none;">
+  <div class="col-md-3">
+    <div class="glass-panel p-3">
+      <div class="text-secondary small fw-bold font-mono">PROJECTED CUMULATIVE DEMAND</div>
+      <div class="h3 text-white fw-bold mb-0" id="foreTotalLiters">0 <small class="fs-6 text-muted">L</small></div>
+      <div class="small text-muted font-mono" id="foreHorizonLabel">Across 7 days</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="glass-panel p-3">
+      <div class="text-secondary small fw-bold font-mono">ESTIMATED DAILY PACE</div>
+      <div class="h3 text-info fw-bold mb-0" id="foreDailyAvg">0 <small class="fs-6 text-muted">L/day</small></div>
+      <div class="small text-muted font-mono">Projected load profile</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="glass-panel p-3">
+      <div class="text-secondary small fw-bold font-mono">HISTORICAL BENCHMARK</div>
+      <div class="h3 text-white fw-bold mb-0" id="foreHistAvg">0 <small class="fs-6 text-muted">L/day</small></div>
+      <div class="small text-muted font-mono">Recent observation period</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="glass-panel p-3">
+      <div class="text-secondary small fw-bold font-mono">PREDICTED TRAJECTORY</div>
+      <div class="h3 fw-bold mb-0 font-mono" id="foreTrendBadge">Stable</div>
+      <div class="small text-muted font-mono" id="foreAlgorithmUsed">Algorithm</div>
+    </div>
+  </div>
+</div>
+
+<!-- Forecast Trajectory Chart -->
+<div class="glass-panel p-4 mb-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h3 class="h6 fw-bold text-white mb-1"><i class="bi bi-water text-info me-2"></i>Historical Telemetry ➔ Predictive Trajectory</h3>
+      <p class="text-secondary small mb-0">Historical flow connected with prospective forecast ribbon and variance bounds.</p>
+    </div>
+    <span class="badge bg-secondary font-mono small">PROJECTION MATRIX</span>
+  </div>
+  <div style="height: 380px;">
+    <canvas id="forecastCanvas"></canvas>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let forecastChartInstance = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  runForecastQuery();
+});
+
+async function runForecastQuery() {
+  const horizon = document.getElementById('forecastHorizon').value;
+  const method = document.getElementById('forecastMethod').value;
+  const meter = document.getElementById('forecastMeter').value;
+
+  const params = new URLSearchParams({ horizon, method });
+  if (meter) params.append('meter_id', meter);
+
+  try {
+    const res = await fetch(`/api/forecast?${params.toString()}`);
+    const data = await res.json();
+
+    if (data.status === 'success') {
+      document.getElementById('forecastMetricsRow').style.display = 'flex';
+      document.getElementById('foreTotalLiters').innerHTML = `${data.summary.total_forecast_liters.toLocaleString()} <small class="fs-6 text-muted">L</small>`;
+      document.getElementById('foreDailyAvg').innerHTML = `${data.summary.avg_daily_liters.toLocaleString()} <small class="fs-6 text-muted">L/d</small>`;
+      document.getElementById('foreHistAvg').innerHTML = `${data.summary.historical_daily_avg.toLocaleString()} <small class="fs-6 text-muted">L/d</small>`;
+
+      const trendEl = document.getElementById('foreTrendBadge');
+      trendEl.textContent = data.summary.trend_direction;
+      trendEl.className = data.summary.trend_direction === 'Increasing' ? 'h3 fw-bold text-warning mb-0 font-mono' : 'h3 fw-bold text-success mb-0 font-mono';
+
+      document.getElementById('foreAlgorithmUsed').textContent = data.method_used.replace('_', ' ').toUpperCase();
+      document.getElementById('foreHorizonLabel').textContent = `Across ${data.horizon_days} days`;
+
+      forecastChartInstance = createForecastChart('forecastCanvas', data.historical, data.forecast);
+    } else {
+      showToast('Forecast Notice', data.message || 'Need more historical records to project demand', 'warning');
+    }
+  } catch (err) {
+    showToast('Network Error', 'Failed to retrieve forecast projections', 'danger');
+  }
+}
+</script>
+{% endblock %}

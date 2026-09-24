@@ -1,0 +1,982 @@
+/* ==========================================================================
+   AQUAGUARD AI — DESIGN 3: GEOSPATIAL GRID THEME
+   Monochrome water intelligence. Black / charcoal / white / grey.
+   Overrides the legacy holographic palette while keeping every class intact.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. TOKENS — monochrome re-mapping (same names, neutral values)
+   -------------------------------------------------------------------------- */
+:root {
+  --bg-deep: #050607;
+  --bg-ocean: #0b0d0f;
+  --bg-abyss: #030405;
+
+  --aqua-1: #ffffff;          /* primary accent -> white */
+  --aqua-2: #d6d6d6;          /* bright accent -> light grey */
+  --aqua-3: #9fa4a8;          /* hydro blue -> grey */
+  --aqua-deep: #232629;
+  --teal: #c8cccf;
+  --holo-purple: #b9bdc1;
+  --green: #e8ece9;           /* success -> light white/grey */
+  --amber: #d9c8a3;           /* warning -> muted amber (rare use) */
+  --red: #e26d6d;             /* critical -> subtle red */
+  --red-deep: #b54a4a;
+
+  --text-hi: #f5f5f5;
+  --text-dim: #a5a5a5;
+  --text-mut: #666666;
+
+  --bs-secondary: #a5a5a5;
+  --bs-secondary-rgb: 165, 165, 165;
+  --bs-secondary-color: #a5a5a5;
+  --bs-secondary-color-rgb: 165, 165, 165;
+  --bs-border-color: rgba(255, 255, 255, 0.10);
+
+  --glass-bg: rgba(11, 13, 15, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-border-bright: rgba(255, 255, 255, 0.22);
+  --glass-blur: blur(20px) saturate(1);
+
+  --glow-aqua: 0 0 0 rgba(0,0,0,0);
+  --glow-aqua-lg: 0 0 18px rgba(255,255,255,0.05);
+  --glow-red: 0 0 16px rgba(226,109,109,0.22);
+  --glow-green: 0 0 14px rgba(255,255,255,0.06);
+
+  --card-bg: rgba(255, 255, 255, 0.025);
+  --card-border: rgba(255, 255, 255, 0.10);
+  --panel-bg: #101316;
+  --panel-elev: #15191c;
+}
+
+/* --------------------------------------------------------------------------
+   2. BASE ENVIRONMENT — black satellite background, faint grid + coordinates
+   -------------------------------------------------------------------------- */
+body {
+  background: var(--bg-deep);
+  color: var(--text-hi);
+}
+
+body::before {
+  background:
+    radial-gradient(1100px 640px at 50% -12%, rgba(255,255,255,0.045), transparent 60%),
+    radial-gradient(760px 520px at 100% 92%, rgba(255,255,255,0.025), transparent 55%),
+    linear-gradient(180deg, #070809 0%, #050607 55%, #040506 100%);
+}
+
+::selection { background: rgba(255, 255, 255, 0.18); }
+
+a { color: var(--text-hi); }
+a:hover { color: #ffffff; }
+
+/* quiet atmosphere canvas (particles recolored in main.js) */
+#waterAtmosphereCanvas { opacity: 0.5; z-index: 0; }
+
+/* faint monochrome technical grid */
+.bg-hydro-grid {
+  background:
+    linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+  background-size: 52px 52px;
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.9), transparent 88%);
+          mask-image: linear-gradient(180deg, rgba(0,0,0,0.9), transparent 88%);
+}
+
+/* faint rolling satellite datapoints */
+.sat-drift {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background-image:
+    radial-gradient(1.6px 1.6px at 12% 22%, rgba(255,255,255,0.5), transparent 60%),
+    radial-gradient(1.4px 1.4px at 31% 66%, rgba(255,255,255,0.35), transparent 60%),
+    radial-gradient(1.8px 1.8px at 58% 34%, rgba(255,255,255,0.45), transparent 60%),
+    radial-gradient(1.3px 1.3px at 74% 78%, rgba(255,255,255,0.3), transparent 60%),
+    radial-gradient(1.5px 1.5px at 88% 44%, rgba(255,255,255,0.4), transparent 60%),
+    radial-gradient(1.3px 1.3px at 44% 88%, rgba(255,255,255,0.3), transparent 60%);
+  opacity: 0.8;
+  animation: satDrift 90s linear infinite;
+  will-change: transform;
+}
+@keyframes satDrift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-14px, 34px, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .sat-drift { animation: none; } }
+
+/* faint coordinate labels (satellite metadata) */
+.sat-coords {
+  position: fixed; z-index: 1; pointer-events: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 1.6px; color: rgba(255,255,255,0.28);
+  text-transform: uppercase;
+}
+.sat-coords::before {
+  content: '37.7749° N  /  122.4194° W  ·  UTM 10S';
+  position: fixed; right: 18px; bottom: 14px;
+}
+.sat-coords::after {
+  content: 'GRID 52M  ·  SAT FEED 04:12:09 UTC';
+  position: fixed; left: 18px; top: calc(var(--nav-h) + 70px);
+}
+
+/* vignette — keep but neutral */
+body::after {
+  background: radial-gradient(120% 90% at 50% 40%, transparent 52%, rgba(2, 2, 3, 0.6) 100%);
+}
+
+.cursor-ambient-glow {
+  background: radial-gradient(circle, rgba(255,255,255,0.04), transparent 62%);
+}
+
+/* --------------------------------------------------------------------------
+   3. LAYOUT / SECTIONS
+   -------------------------------------------------------------------------- */
+.page-enter { animation: surfaceBreak .65s var(--ease-out) both; }
+@keyframes surfaceBreak {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* section category label — "# WATER CONSUMPTION INTELLIGENCE" */
+.geo-section {
+  display: flex; align-items: baseline; gap: 14px;
+  margin: 40px 2px 18px;
+}
+.geo-section .geo-hash { color: var(--text-mut); font-family: 'JetBrains Mono'; font-size: 13px; }
+.geo-section h2 {
+  font-size: 15px; font-weight: 700; letter-spacing: 3.5px;
+  text-transform: uppercase; color: var(--text-hi); margin: 0;
+}
+.geo-section p { margin: 3px 0 0; font-size: 12px; color: var(--text-dim); letter-spacing: .3px; flex: 1; }
+.geo-section .geo-sub { flex: none; font-family: 'JetBrains Mono'; font-size: 9.5px; letter-spacing: 2px; color: var(--text-mut); }
+
+/* legacy section-holo — align into the new language */
+.section-holo { margin: 34px 2px 16px; }
+.section-holo .holo-mark {
+  width: 38px; height: 38px; border-radius: 11px;
+  font-size: 16px; color: var(--text-hi);
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  box-shadow: none;
+}
+.section-holo h2 {
+  font-size: 16px; font-weight: 700; letter-spacing: 2.6px;
+  text-transform: uppercase; text-shadow: none; color: var(--text-hi);
+}
+.section-holo p { color: var(--text-dim); }
+
+/* --------------------------------------------------------------------------
+   4. TOP NAVIGATION — professional monochrome bar
+   -------------------------------------------------------------------------- */
+.aq-nav {
+  background: linear-gradient(180deg, rgba(5,6,7,0.94), rgba(5,6,7,0.72));
+  backdrop-filter: blur(20px) saturate(1);
+  -webkit-backdrop-filter: blur(20px) saturate(1);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.aq-brand:hover { text-decoration: none; }
+.aq-brand-orb {
+  width: 36px; height: 36px;
+  color: #ffffff; font-size: 17px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 9px;
+  box-shadow: none; overflow: hidden;
+}
+.aq-brand-orb::before { display: none; }
+.aq-brand-orb i { filter: none; }
+.aq-brand-name strong {
+  background: none; -webkit-background-clip: initial; background-clip: initial;
+  -webkit-text-fill-color: #ffffff; color: #ffffff;
+  font-size: 14px; letter-spacing: 2.2px; font-weight: 800;
+}
+.aq-brand-name small { color: var(--text-mut); letter-spacing: 3.2px; font-weight: 600; text-shadow: none; }
+
+/* center nav — flat links, white active + thin underline */
+.aq-pillnav {
+  background: transparent;
+  padding: 0 8px; border-radius: 0;
+  border: none; box-shadow: none;
+}
+.aq-pillnav-link {
+  padding: 10px 14px; border-radius: 8px;
+  font-size: 12.5px; letter-spacing: .55px; color: var(--text-mut);
+}
+.aq-pillnav-link:hover { color: #ffffff; background: rgba(255,255,255,0.05); }
+.aq-pillnav-link.active { color: #ffffff; background: none; text-shadow: none; }
+.aq-pillnav-link.active::before {
+  content: ''; position: absolute; left: 14px; right: 14px; bottom: 2px; height: 2px;
+  border-radius: 2px; background: #ffffff; box-shadow: none;
+  animation: none;
+}
+.aq-pillnav-link.active::after { display: none; }
+
+/* right cluster */
+.aq-status {
+  padding: 6px 12px; border-radius: 8px;
+  font-size: 10px; letter-spacing: 1.8px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg); color: var(--text-dim);
+}
+.aq-status .status-beacon { background: #e8ece9; }
+.aq-status.analyzing { border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.06); color: #fff; }
+.aq-status.analyzing .status-beacon { background: #fff; }
+.aq-status.attention { border-color: rgba(226,109,109,.4); background: rgba(226,109,109,.1); color: #e26d6d; }
+.aq-status.attention .status-beacon { background: var(--red); box-shadow: 0 0 8px var(--red); }
+
+/* global search field */
+.nav-search {
+  position: relative; display: none;
+  align-items: center; gap: 8px;
+  min-width: 190px; max-width: 230px;
+  height: 34px; padding: 0 12px;
+  border-radius: 9px; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: var(--text-mut); transition: border-color .2s;
+}
+.nav-search:focus-within { border-color: rgba(255,255,255,0.3); }
+.nav-search i { font-size: 12px; }
+.nav-search input {
+  flex: 1; min-width: 0; background: none; border: none; outline: none;
+  color: var(--text-hi); font-size: 12px; font-family: 'Inter';
+}
+.nav-search input::placeholder { color: var(--text-mut); }
+.nav-search-results {
+  position: absolute; top: 42px; right: 0; left: 0;
+  background: #0b0d0f; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px; box-shadow: 0 18px 50px rgba(0,0,0,0.7);
+  padding: 6px; display: none; z-index: 1400; max-height: 360px; overflow-y: auto;
+}
+.nav-search-results.show { display: block; }
+.nav-search-results .ns-cat {
+  font-size: 8.5px; letter-spacing: 2px; color: var(--text-mut);
+  font-family: 'JetBrains Mono'; padding: 7px 10px 3px;
+}
+.nav-search-results a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px; color: var(--text-hi);
+  font-size: 12.5px; text-decoration: none;
+}
+.nav-search-results a:hover { background: rgba(255,255,255,0.06); }
+.nav-search-results .ns-meta { margin-left: auto; font-size: 9.5px; color: var(--text-mut); font-family: 'JetBrains Mono'; }
+.nav-search-results .ns-empty { padding: 10px; font-size: 12px; color: var(--text-mut); text-align: center; }
+@media (min-width: 1200px) { .nav-search { display: flex; } }
+
+.aq-icon-btn {
+  width: 36px; height: 36px;
+  border: 1px solid var(--card-border); background: var(--card-bg);
+  color: var(--text-dim); border-radius: 9px;
+}
+.aq-icon-btn:hover { color: #fff; border-color: rgba(255,255,255,.28); box-shadow: none; }
+.aq-icon-btn .aq-badge { background: var(--red); color: #fff; box-shadow: 0 0 8px rgba(226,109,109,.5); }
+
+.aq-avatar {
+  width: 36px; height: 36px; border-radius: 9px;
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  color: var(--text-dim); font-size: 15px; box-shadow: none;
+}
+.aq-avatar:hover { color: #fff; border-color: rgba(255,255,255,.28); }
+
+.aq-dropdown { background: #0b0d0f !important; border: 1px solid rgba(255,255,255,0.10) !important; border-radius: 14px !important; }
+.aq-drop-item:hover, .aq-drop-item:focus { background: rgba(255,255,255,0.06) !important; color: #fff !important; }
+
+.aq-sheet { background: rgba(5,6,7,0.97); border-bottom: 1px solid rgba(255,255,255,0.1); }
+.aq-sheet a { color: var(--text-dim); }
+.aq-sheet a:hover, .aq-sheet a.active { color: #fff; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.14); }
+
+.mobile-dock { background: rgba(11,13,15,0.94); border: 1px solid rgba(255,255,255,0.10); box-shadow: 0 14px 40px rgba(0,0,0,0.7); }
+.mobile-dock a { color: var(--text-mut); }
+.mobile-dock a.active, .mobile-dock a:hover { color: #fff; background: rgba(255,255,255,0.07); box-shadow: none; }
+.mobile-dock .dock-more {
+  flex: 1; height: 100%;
+  border: none; background: none; color: var(--text-mut);
+  font-size: 18px; display: grid; place-items: center; cursor: pointer;
+  transition: color .2s, background .2s;
+}
+.mobile-dock .dock-more:hover { color: #fff; background: rgba(255,255,255,0.07); }
+
+/* --------------------------------------------------------------------------
+   5. GLASS PANELS / CARDS — black, thin borders, subtle shadow
+   -------------------------------------------------------------------------- */
+.glass-panel, .glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px) saturate(1);
+  -webkit-backdrop-filter: blur(16px) saturate(1);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  box-shadow: 0 18px 50px -34px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.02);
+}
+.glass-panel::before, .glass-card::before {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  height: 1px;
+}
+.glass-panel.interactive:hover, .glass-card.interactive:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,0.2);
+  box-shadow: 0 22px 56px -34px rgba(0,0,0,.9);
+}
+.holo-border-travel::after {
+  background: linear-gradient(110deg, transparent 32%, rgba(255,255,255,0.32) 50%, transparent 68%);
+  background-size: 220% 220%;
+}
+
+/* --------------------------------------------------------------------------
+   6. BUTTONS & CONTROLS
+   -------------------------------------------------------------------------- */
+.btn-holo, .btn-holo-alt, .btn-holo-eco {
+  border-radius: 10px; font-size: 11.5px; letter-spacing: 1.6px;
+  padding: 9px 18px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.04);
+  color: #fff;
+  box-shadow: none;
+}
+.btn-holo:hover, .btn-holo-alt:hover, .btn-holo-eco:hover {
+  background: #ffffff; color: #050607; border-color: #ffffff;
+  box-shadow: 0 8px 30px -12px rgba(255,255,255,0.4);
+  transform: translateY(-2px);
+}
+.btn-holo-eco { color: var(--text-hi); border-color: rgba(255,255,255,.14); background: rgba(255,255,255,.03); }
+.btn-holo-eco:hover { background: #fff; color: #050607; }
+.btn-holo::before, .btn-holo-alt::before, .btn-holo-eco::before {
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.28), transparent);
+}
+
+.water-ripple-wave { background: radial-gradient(circle, rgba(255,255,255,0.35), transparent 70%); box-shadow: none; }
+
+.holo-input, .holo-select {
+  background: #0b0d0f !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: var(--text-hi) !important;
+  border-radius: 9px !important;
+}
+.holo-input:focus, .holo-select:focus {
+  border-color: rgba(255,255,255,0.35) !important;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.06) !important;
+}
+.holo-select option { background: #0b0d0f; }
+.form-range::-webkit-slider-thumb { background: #fff; box-shadow: none; border: 2px solid #0b0d0f; }
+.form-range::-moz-range-thumb { background: #fff; box-shadow: none; border: 2px solid #0b0d0f; }
+.form-range::-webkit-slider-runnable-track { background: rgba(255,255,255,0.16); height: 4px; }
+.form-check-input:checked { background-color: #fff; border-color: #fff; }
+
+.status-beacon { background: #e8ece9; box-shadow: none; }
+
+/* --------------------------------------------------------------------------
+   7. HERO — GEOSPATIAL WATER INTELLIGENCE CORE
+   -------------------------------------------------------------------------- */
+.water-hero {
+  position: relative;
+  border-radius: 20px;
+  padding: 34px 40px 18px;
+  margin: 14px 0 6px;
+  background:
+    linear-gradient(180deg, rgba(16,19,22,0.5), rgba(5,6,7,0.35));
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 30px 90px -40px rgba(0,0,0,0.9), inset 0 0 120px rgba(255,255,255,0.012);
+  overflow: hidden;
+}
+.water-hero::before {
+  background:
+    radial-gradient(ellipse at 78% 45%, rgba(255,255,255,0.04), transparent 55%);
+}
+
+.geo-hero { display: grid; grid-template-columns: 1.05fr 0.95fr; align-items: center; gap: 28px; }
+
+.geo-hero-eyebrow {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'JetBrains Mono'; font-size: 9.5px; font-weight: 700;
+  letter-spacing: 4px; color: var(--text-mut); text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.geo-hero-eyebrow::before { content: ''; width: 22px; height: 1px; background: rgba(255,255,255,0.35); }
+
+.geo-hero-title {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-weight: 800; font-size: clamp(38px, 5vw, 58px);
+  line-height: 0.98; letter-spacing: -1.5px; color: #ffffff;
+  text-transform: uppercase; margin: 0 0 20px;
+}
+.geo-hero-title .g-mut { color: var(--text-dim); }
+
+.geo-hero-sub {
+  font-size: 15px; color: var(--text-dim); line-height: 1.6;
+  max-width: 460px; margin: 0 0 22px; letter-spacing: .2px;
+}
+
+.geo-hero-status {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 7px 14px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04);
+  font-family: 'JetBrains Mono'; font-size: 10px; font-weight: 700;
+  letter-spacing: 2.4px; color: var(--text-hi); text-transform: uppercase;
+}
+.geo-hero-status .status-beacon { background: #e8ece9; }
+
+.geo-hero-meta { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 22px; }
+.geo-meta-item { min-width: 96px; }
+.geo-meta-label { font-family: 'JetBrains Mono'; font-size: 8.5px; letter-spacing: 2px; color: var(--text-mut); display: block; margin-bottom: 4px; }
+.geo-meta-value { font-family: 'Space Grotesk'; font-weight: 800; font-size: 22px; color: #fff; line-height: 1; }
+.geo-meta-item small { display: block; font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+
+/* --- Globe / network visualization --- */
+.geo-hero-visual { display: flex; justify-content: center; align-items: center; }
+.geo-globe-holder { position: relative; width: min(360px, 100%); aspect-ratio: 1; }
+.water-core-sphere.geo-globe {
+  position: relative; width: 100%; height: 100%; border-radius: 50%;
+  display: block; grid: unset; place-items: unset;
+  background: radial-gradient(circle at 50% 42%, rgba(255,255,255,0.05), rgba(16,19,22,0.55) 58%, rgba(5,6,7,0.9) 100%);
+  border: 1px solid rgba(255,255,255,0.16);
+  box-shadow: 0 0 60px -18px rgba(255,255,255,0.08), inset 0 0 60px rgba(255,255,255,0.02);
+  animation: none; transition: box-shadow .5s var(--ease-out);
+}
+.water-core-sphere.geo-globe:hover { transform: none; }
+@keyframes geoBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.water-core-sphere.geo-globe { animation: geoBob 9s ease-in-out infinite; }
+
+.geo-globe-svg { position: relative; z-index: 2; width: 100%; height: 100%; display: block; }
+.geo-globe-svg .g-outline { fill: none; stroke: rgba(255,255,255,0.28); stroke-width: 1; }
+.geo-globe-svg .g-merid { fill: none; stroke: rgba(255,255,255,0.13); stroke-width: 1; }
+.geo-globe-svg .g-grid { fill: none; stroke: rgba(255,255,255,0.09); stroke-width: 0.8; }
+.geo-globe-svg .g-dash { stroke-dasharray: 3 6; }
+.geo-globe-svg .g-spin { transform-origin: 160px 160px; transform-box: view-box; animation: gSpin 40s linear infinite; }
+@keyframes gSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .geo-globe-svg .g-spin { animation: none; } }
+
+.geo-g-nodes g { animation: gPulse 4.5s ease-in-out infinite; }
+.geo-g-nodes g:nth-child(2n) { animation-delay: 1.4s; }
+.geo-g-nodes g:nth-child(3n) { animation-delay: 2.6s; }
+@keyframes gPulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+.geo-g-nodes .gn-link { stroke: rgba(255,255,255,0.12); stroke-width: 0.8; }
+
+.geo-globe-tag {
+  position: absolute; left: 50%; bottom: -4px; transform: translateX(-50%);
+  font-family: 'JetBrains Mono'; font-size: 8.5px; letter-spacing: 2.6px;
+  color: var(--text-mut); text-transform: uppercase; white-space: nowrap;
+}
+
+/* globe center readout (sustainability score) */
+.geo-globe .geo-globe-svg { position: absolute; inset: 0; }
+.geo-globe .geo-globe-readout {
+  position: absolute; inset: 0; z-index: 3;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; pointer-events: none;
+}
+.geo-globe .core-value { font-size: 32px; line-height: 1; text-shadow: none; color: #fff; margin: 0; }
+.geo-globe .core-label { font-size: 8px; font-weight: 700; letter-spacing: 3.5px; color: var(--text-mut); text-shadow: none; margin: 0; }
+.geo-globe .core-tier { font-size: 8px; font-weight: 700; letter-spacing: 2px; color: #d6d6d6; text-shadow: none; margin: 0; }
+.geo-globe .core-tier.warn { color: var(--amber); text-shadow: none; }
+.geo-globe .core-tier.bad { color: var(--red); text-shadow: none; }
+.geo-globe .core-droplet { background: radial-gradient(circle at 35% 30%, #fff, rgba(255,255,255,0.55) 70%); box-shadow: 0 0 6px rgba(255,255,255,0.35); }
+
+/* water risk network panel */
+.rn-grid { stroke: rgba(255,255,255,0.06); stroke-width: 1; }
+.rn-node { cursor: pointer; }
+.rn-node:hover .rn-label { fill: #fff; }
+.rn-label { fill: var(--text-mut); font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: .6px; }
+.rn-ring { opacity: .9; animation: rnPulse 2.6s ease-in-out infinite; }
+.rn-ring.critical { stroke: rgba(226,109,109,0.75); }
+.rn-ring.high { stroke: rgba(217,217,217,0.7); }
+.rn-ring.medium { stroke: rgba(159,164,168,0.7); }
+.rn-ring.normal { stroke: rgba(232,236,233,0.55); }
+@keyframes rnPulse { 0%,100% { opacity: .25; } 50% { opacity: .95; } }
+@media (prefers-reduced-motion: reduce) { .rn-ring { animation: none; } }
+
+.geo-globe.tele-live { animation: geoLiveGlow 4s var(--ease-out) infinite alternate; }
+.geo-globe.tele-critical { box-shadow: 0 0 0 1px rgba(226,109,109,0.4), 0 0 44px -8px rgba(226,109,109,0.35); }
+@keyframes geoLiveGlow { from { box-shadow: 0 0 40px -16px rgba(255,255,255,0.1); } to { box-shadow: 0 0 60px -12px rgba(255,255,255,0.22); } }
+
+/* --- Live event alert bar (bottom of hero) --- */
+.ai-status-tape {
+  margin: 8px 0 0; max-width: none;
+  font-size: 10px; letter-spacing: 2.2px; color: var(--text-dim);
+  padding: 10px 18px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.03);
+  cursor: pointer;
+}
+.ai-status-tape:hover { border-color: rgba(255,255,255,0.24); background: rgba(255,255,255,0.05); }
+.ai-status-tape .live-dot { background: #fff; box-shadow: none; }
+.ai-status-tape .live-dot.ok { background: #e8ece9; box-shadow: none; }
+.ai-status-tape .live-dot.bad { background: var(--red); box-shadow: 0 0 8px rgba(226,109,109,.5); }
+.ai-status-tape .msg { color: var(--text-hi); text-shadow: none; }
+.ai-status-tape .msg.bad { color: #f0b6b6; text-shadow: none; }
+.ai-status-tape .msg.ok { color: var(--text-dim); }
+
+/* --------------------------------------------------------------------------
+   8. KPI ROW — four monochrome cards with mini charts
+   -------------------------------------------------------------------------- */
+.kpi-row {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 14px; margin: 26px 0 8px;
+}
+.kpi-card {
+  position: relative;
+  overflow: hidden;
+  padding: 18px 18px 14px;
+  border-radius: 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 14px 40px -30px rgba(0,0,0,0.8);
+  transition: border-color .25s, transform .25s var(--ease-out), box-shadow .25s;
+}
+.kpi-card:hover {
+  border-color: rgba(255,255,255,0.24);
+  transform: translateY(-2px);
+  box-shadow: 0 22px 60px -34px rgba(0,0,0,0.9);
+}
+.kpi-card .kpi-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.kpi-card .kpi-title { font-size: 10px; font-weight: 700; letter-spacing: 2.6px; text-transform: uppercase; color: var(--text-mut); }
+.kpi-card .kpi-ic { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; font-size: 14px; color: #fff; border: 1px solid var(--card-border); background: rgba(255,255,255,0.04); }
+.kpi-card .kpi-number { font-family: 'Space Grotesk'; font-weight: 800; font-size: 30px; line-height: 1; color: #fff; letter-spacing: -0.5px; }
+.kpi-card .kpi-number small { font-size: 14px; color: var(--text-dim); font-weight: 600; }
+.kpi-card .kpi-trend { display: flex; align-items: center; gap: 7px; margin-top: 8px; font-size: 10.5px; font-weight: 600; color: var(--text-dim); }
+.kpi-card .kpi-trend .up { color: #f0b6b6; }
+.kpi-card .kpi-trend .dn { color: var(--text-dim); }
+.kpi-card .kpi-sparkline { margin-top: 10px; height: 24px; max-width: 100%; overflow: hidden; opacity: .9; }
+.kpi-card .kpi-sparkline svg { width: 100% !important; height: 100% !important; display: block; }
+
+/* any other sparkline host — never let the svg exceed its 24px frame */
+.kpi-spark { overflow: hidden; }
+.kpi-spark svg { width: 100% !important; height: 100% !important; display: block; }
+
+/* keep legacy .core-kpi usable if pages still reference it */
+.core-kpi {
+  border-radius: 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 14px 34px -24px rgba(0,0,0,.8);
+  animation: none;
+}
+.core-kpi:hover { border-color: rgba(255,255,255,.2); box-shadow: none; transform: none; }
+.core-kpi .kpi-icon { color: var(--text-hi); background: rgba(255,255,255,.04); border-color: var(--card-border); }
+.core-kpi .kpi-value { color: #fff; text-shadow: none; }
+.core-kpi .kpi-title { color: var(--text-mut); letter-spacing: 2.4px; }
+.core-kpi .kpi-foot { color: var(--text-dim); }
+.core-kpi .kpi-foot .delta.up { color: #f0b6b6; text-shadow: none; }
+.core-kpi .kpi-foot .delta.down { color: var(--text-dim); }
+.core-kpi .kpi-foot .delta.neutral { color: var(--text-dim); }
+
+/* --------------------------------------------------------------------------
+   9. WATER CONSUMPTION INTELLIGENCE
+   -------------------------------------------------------------------------- */
+.water-stream-panel { padding: 24px; }
+.stream-legend .lg { color: var(--text-dim); font-weight: 600; }
+.stream-legend .swatch { background: rgba(255,255,255,.5); }
+.stream-legend .swatch.glow { box-shadow: none; }
+.stream-legend .swatch.sw-red { background: var(--red); }
+
+/* --------------------------------------------------------------------------
+   10. ANOMALY FIELD / INSIGHT — neutralized
+   -------------------------------------------------------------------------- */
+.anom-dot {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);
+  color: #d9d9d9; font-size: 9px;
+}
+.anom-dot:hover { box-shadow: 0 0 12px rgba(255,255,255,0.25); }
+.anom-dot.med { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.3); color: #b8bbbe; }
+.anom-dot.high { background: rgba(217,200,163,0.12); border-color: rgba(217,200,163,0.4); color: #d9c8a3; }
+.anom-dot.crit { background: rgba(226,109,109,0.14); border-color: rgba(226,109,109,0.5); color: #e26d6d; }
+
+.holo-insight { background: var(--card-bg); border-color: var(--card-border); }
+.holo-insight .section-holo h2 { color: var(--text-hi); text-shadow: none; }
+.holo-insight .section-holo .holo-mark { color: var(--text-hi); border-color: var(--card-border); box-shadow: none; }
+
+.ai-scanline::before { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent); opacity: .5; }
+.cause-hypothesis-item { background: rgba(255,255,255,0.03); border-left: 2px solid rgba(255,255,255,0.4); }
+
+/* --------------------------------------------------------------------------
+   11. TABLES, PILLS, BADGES, BOOTSTRAP SEMANTICS
+   -------------------------------------------------------------------------- */
+.holo-table th { color: var(--text-mut); letter-spacing: 1.8px; }
+.holo-table td { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.07); color: var(--text-hi); }
+.holo-table tbody tr:hover td { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.14); }
+
+.table-dark { --bs-table-bg: rgba(255,255,255,0.02); --bs-table-border-color: rgba(255,255,255,0.08); }
+.table-lab td { background: rgba(255,255,255,0.02); }
+.table-lab th { color: var(--text-mut); }
+
+.pill-severity { letter-spacing: 1.4px; }
+.pill-critical { background: rgba(226,109,109,0.12); border: 1px solid rgba(226,109,109,0.45); color: #e26d6d; box-shadow: none; }
+.pill-high { background: rgba(217,200,163,0.12); border: 1px solid rgba(217,200,163,0.4); color: #d9c8a3; }
+.pill-medium { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.28); color: #d6d6d6; }
+.pill-moderate { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.28); color: #cfcfcf; }
+.pill-normal { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: #e8ece9; }
+.pill-low { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.18); color: #d7dad9; }
+
+.badge { font-family: 'JetBrains Mono'; letter-spacing: 1px; }
+.bg-success { background: rgba(232,236,233,0.1) !important; color: #e8ece9 !important; }
+.bg-danger { background: rgba(226,109,109,0.12) !important; color: #e26d6d !important; }
+.bg-warning { background: rgba(217,200,163,0.12) !important; color: #d9c8a3 !important; }
+.bg-info { background: rgba(255,255,255,0.08) !important; color: #d6d6d6 !important; }
+.bg-secondary { background: rgba(102,102,102,0.25) !important; color: #d6d6d6 !important; }
+
+.text-info { color: #c6c9cc !important; }
+.text-warning { color: #d9c8a3 !important; }
+.text-success { color: #e8ece9 !important; }
+.text-danger { color: #e26d6d !important; }
+.text-primary { color: #ffffff !important; }
+.text-light { color: #e4e4e4 !important; }
+.text-secondary { color: #9b9b9b !important; }
+.text-muted { color: #6a6a6a !important; }
+
+.btn-close { filter: invert(1); }
+
+.pagination .page-link { background: #0b0d0f; border-color: rgba(255,255,255,0.12); color: var(--text-dim); }
+.pagination .page-link:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+.pagination .page-link.active { background: #fff; color: #050607; box-shadow: none; }
+
+.progress { background: rgba(255,255,255,0.07); border-radius: 20px; }
+.progress-bar { border-radius: 20px; background: #d8d8d8; }
+
+/* --------------------------------------------------------------------------
+   12. TRANSITION & PIPELINE OVERLAYS — monochrome
+   -------------------------------------------------------------------------- */
+.aq-transition {
+  background:
+    radial-gradient(120% 120% at 50% 120%, rgba(255,255,255,0.08), transparent 60%),
+    rgba(3, 4, 5, 0.94);
+}
+.aq-transition .t-label { color: var(--text-dim); text-shadow: none; letter-spacing: 4.5px; }
+.aq-transition .t-sphere { border: 1.5px solid rgba(255,255,255,0.35); border-top-color: #fff; box-shadow: 0 0 24px rgba(255,255,255,0.08); }
+
+.aq-pipeline {
+  background:
+    radial-gradient(90% 90% at 50% 110%, rgba(255,255,255,0.05), transparent 60%),
+    rgba(3, 4, 5, 0.96);
+}
+.aq-pipeline .pipe-title { color: #fff; text-shadow: none; letter-spacing: 7px; }
+.aq-pipeline .pipe-orb .o-ring:nth-child(1) { border-top-color: rgba(255,255,255,0.9); }
+.aq-pipeline .pipe-orb .o-ring:nth-child(2) { border-bottom-color: rgba(255,255,255,0.4); }
+.aq-pipeline .pipe-orb .o-ring:nth-child(3) { border-left-color: rgba(255,255,255,0.6); }
+.aq-pipeline .pipe-orb i { color: #fff; filter: none; }
+.pipe-stage.done { color: #d7dad9; border-color: rgba(255,255,255,0.16); background: rgba(255,255,255,0.04); }
+.pipe-stage.done .st-icon { color: #d7dad9; }
+.pipe-stage.active { color: #fff; background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.24); }
+.pipe-stage.active .st-spin::before { border: 2px solid rgba(255,255,255,0.25); border-top-color: #fff; }
+
+/* --------------------------------------------------------------------------
+   13. UPLOAD / FLOW PIECES
+   -------------------------------------------------------------------------- */
+.drop-portal {
+  border: 1.5px dashed rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.02);
+}
+.drop-portal:hover, .drop-portal.dragover { border-color: rgba(255,255,255,0.5); box-shadow: 0 0 40px -10px rgba(255,255,255,0.12), inset 0 0 40px rgba(255,255,255,0.02); }
+.drop-portal .drop-orb { color: #fff; background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: none; }
+.drop-portal .drop-ripple span { border-color: rgba(255,255,255,0.5); }
+.drop-portal h3 { text-shadow: none; letter-spacing: 4px; }
+.drop-portal .fmts { color: var(--text-dim); }
+
+.pipe-flow-step.active { color: #fff; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); }
+.pipe-flow-step.done { color: #d7dad9; }
+.pipe-flow-step.done .ic { color: #d7dad9; }
+.health-meter-row { border-bottom: 1px solid rgba(255,255,255,0.06); }
+.health-meter-row .hm-item { background: rgba(0,0,0,.25); border-color: rgba(255,255,255,0.08); }
+.health-meter-row .hm-val { text-shadow: none; }
+
+/* --------------------------------------------------------------------------
+   14. MAP — WATER USAGE RISK MAP (monochrome)
+   -------------------------------------------------------------------------- */
+.map-holo-overlay::before {
+  background:
+    linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mix-blend-mode: overlay;
+}
+#map { background: #0a0c0e; }
+#map .leaflet-tile-pane { filter: grayscale(0.92) brightness(0.72) contrast(1.1); }
+#map .leaflet-control-attribution { background: rgba(5,6,7,0.6) !important; color: rgba(255,255,255,0.4) !important; }
+#map .leaflet-control-zoom a { background: #0b0d0f; color: #fff; border: 1px solid rgba(255,255,255,0.15); }
+#map .leaflet-control-zoom a:hover { background: #fff; color: #050607; }
+.leaflet-popup-content-wrapper {
+  background: #101316 !important; color: #fff !important;
+  border: 1px solid rgba(255,255,255,0.14); border-radius: 12px !important;
+  box-shadow: 0 18px 50px -20px rgba(0,0,0,0.9) !important;
+}
+.leaflet-popup-tip { background: #101316 !important; border: 1px solid rgba(255,255,255,0.14); }
+
+.live-dot { background: #e8ece9; box-shadow: none; }
+.live-dot.ok { background: #e8ece9; box-shadow: none; }
+.map-live-chip {
+  color: #d9d9d9; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.16);
+}
+
+.map-stage {
+  background: #0a0c0e;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  box-shadow: none;
+  height: 660px;
+}
+.map-stage.filtered { border-color: rgba(255,255,255,0.25); box-shadow: 0 0 30px -10px rgba(255,255,255,0.1); }
+.aq-map-canvas { border-radius: 14px; }
+
+.map-stage-top { background: linear-gradient(180deg, rgba(5,6,7,0.94), rgba(5,6,7,0.5) 70%, transparent); }
+.ms-orb { color: #fff; background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: none; }
+.ms-title-box strong { color: #fff; }
+.ms-live { color: #d9d9d9; }
+.ms-search { background: rgba(5,6,7,0.7); border: 1px solid rgba(255,255,255,0.12); border-radius: 9px; }
+.ms-search:focus-within { border-color: rgba(255,255,255,0.35); box-shadow: 0 0 0 3px rgba(255,255,255,0.05); }
+
+.aq-btn {
+  background: #0b0d0f; color: #fff;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 9px;
+}
+.aq-btn:hover { border-color: rgba(255,255,255,0.4); box-shadow: none; color: #fff; background: rgba(255,255,255,0.06); }
+.aq-btn-ghost { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.12); color: var(--text-dim); }
+.aq-btn-ghost:hover { color: #fff; }
+
+.ms-filters { background: rgba(5,6,7,0.85); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; }
+.ms-filters .fs { background: #0b0d0f; color: #fff; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; }
+.ms-filters .fs:focus { border-color: rgba(255,255,255,0.35); }
+.ms-filters .fs option { background: #0b0d0f; }
+.ms-count { color: var(--text-dim); }
+
+.map-stats { background: rgba(5,6,7,0.82); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; }
+.ms-num { color: #fff; }
+.ms-cap { color: var(--text-mut); }
+
+.map-legend { background: rgba(5,6,7,0.82); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; color: var(--text-dim); }
+.legend-title { color: var(--text-mut); }
+.lg-dot.normal { background: #ffffff; box-shadow: none; }
+.lg-dot.moderate { background: #9fa4a8; box-shadow: none; }
+.lg-dot.high { background: #d9d9d9; box-shadow: 0 0 6px rgba(255,255,255,0.35); }
+.lg-dot.critical { background: #e26d6d; box-shadow: 0 0 6px rgba(226,109,109,0.4); }
+.lg-zone { border-color: rgba(226,109,109,0.55); }
+.lg-bld { border-color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.16); box-shadow: none; }
+
+.building-polygon:hover { filter: none; }
+.building-polygon.bld-focused { stroke: #ffffff !important; animation: none; }
+.bld-badge {
+  background: rgba(11,13,15,0.9);
+  border: 1px solid rgba(255,255,255,0.35);
+  color: #e8e8e8; box-shadow: none;
+}
+.bld-badge i { color: #fff; }
+.bld-badge:hover { border-color: #fff; background: #fff; color: #050607; box-shadow: none; }
+.bld-badge:hover i { color: #050607; }
+.bld-badge.bld-critical { border-color: rgba(226,109,109,0.55); color: #f0b6b6; box-shadow: none; }
+.bld-badge.bld-critical i { color: #e26d6d; }
+.bld-badge.bld-high { border-color: #d9d9d9; color: #d9d9d9; }
+.bld-badge.bld-high i { color: #d9d9d9; }
+.bld-badge.bld-moderate { border-color: #9fa4a8; color: #b8bbbe; }
+.bld-badge.bld-moderate i { color: #9fa4a8; }
+
+.aq-building-tooltip { background: #101316 !important; border: 1px solid rgba(255,255,255,0.14); border-radius: 12px !important; box-shadow: 0 18px 50px -20px rgba(0,0,0,0.9) !important; }
+.aq-bld-tt-head strong { color: #fff; }
+
+.aq-basemap-menu { background: #0b0d0f; border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 18px 50px -20px rgba(0,0,0,0.9); }
+.bm-head { color: #fff; border-color: rgba(255,255,255,0.1); }
+.bm-opt { background: rgba(255,255,255,0.02); }
+.bm-opt:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); }
+.bm-opt.active { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.35); }
+.bm-dot.cyber { background: #ffffff; box-shadow: none; }
+
+.cyber-dark-tiles .leaflet-tile { filter: grayscale(0.95) brightness(0.7) contrast(1.1) !important; }
+
+.risk-marker .marker-core { border-color: rgba(255,255,255,0.9); box-shadow: none; }
+.tt-pill.normal { color: #d7dad9; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); }
+.tt-pill.moderate { color: #b8bbbe; background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.25); }
+.tt-pill.high { color: #e8e8e8; background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.35); }
+.tt-pill.critical { color: #e26d6d; background: rgba(226,109,109,0.12); border-color: rgba(226,109,109,0.4); }
+.aq-marker-tooltip { background: #101316 !important; border: 1px solid rgba(255,255,255,0.14); border-radius: 12px !important; box-shadow: 0 18px 50px -18px rgba(0,0,0,0.9) !important; }
+.aq-mt-head strong { color: #fff; }
+
+.map-intel {
+  background: #0a0c0e;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px; box-shadow: none;
+}
+.mt-head { border-color: rgba(255,255,255,0.08); }
+.mt-title { color: #fff; }
+.reg-row { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.08); }
+.reg-ok { color: #d9ddd9; background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.14); }
+.reg-warn { color: #d9c8a3; background: rgba(217,200,163,0.08); border-color: rgba(217,200,163,0.3); }
+.mt-cell { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.08); }
+.mt-cell-val { color: #fff; }
+.mt-anom { background: rgba(255,255,255,0.03); border-left: 2px solid rgba(255,255,255,0.5); }
+.mt-risk-fill { box-shadow: none; }
+
+/* --------------------------------------------------------------------------
+   15. FORECAST
+   -------------------------------------------------------------------------- */
+.stream-curtain { color: var(--text-mut); }
+.stream-curtain .past { color: #d6d6d6; }
+.stream-curtain .now { color: #fff; text-shadow: none; }
+.stream-curtain .future { color: #b9bdc1; text-shadow: none; }
+.forecast-capsule .big { color: #fff; text-shadow: none; }
+.forecast-capsule .cap { color: var(--text-dim); }
+
+/* --------------------------------------------------------------------------
+   16. SIMULATOR & SUSTAINABILITY
+   -------------------------------------------------------------------------- */
+.sim-orb {
+  background: radial-gradient(circle at 50% 42%, rgba(255,255,255,0.07), rgba(16,19,22,0.7) 62%, rgba(5,6,7,0.95));
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: 0 0 60px -24px rgba(255,255,255,0.12), inset 0 0 40px rgba(255,255,255,0.02);
+}
+.sim-orb .sim-liquid { background: rgba(255,255,255,0.14); }
+.sim-orb .sim-liquid.b { background: rgba(255,255,255,0.08); }
+.sim-orb .sim-val { color: #fff; text-shadow: none; }
+.sim-orb .sim-cap { color: var(--text-dim); letter-spacing: 2.5px; }
+.sim-slider-block label { color: var(--text-dim); }
+
+/* --------------------------------------------------------------------------
+   17. REPORTS
+   -------------------------------------------------------------------------- */
+.report-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 14px 34px -28px rgba(0,0,0,0.8);
+  animation: none;
+  border-radius: 16px;
+}
+.report-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.22); box-shadow: 0 24px 60px -36px rgba(0,0,0,0.9); }
+.report-card .rc-icon { color: #fff; background: rgba(255,255,255,0.04); border-color: var(--card-border); }
+.report-card.eco .rc-icon { color: #e8e8e8; background: rgba(255,255,255,0.04); border-color: var(--card-border); }
+.report-card.warn .rc-icon { color: #d9c8a3; background: rgba(255,255,255,0.03); border-color: rgba(217,200,163,0.3); }
+.report-card.mono .rc-icon { color: #c6c9cc; background: rgba(255,255,255,0.03); border-color: var(--card-border); }
+.report-card h4 { color: #fff; }
+.report-card .rc-act { color: var(--text-dim); }
+.report-card:hover .rc-act { color: #fff; }
+
+/* --------------------------------------------------------------------------
+   18. TIMELINE / MISC
+   -------------------------------------------------------------------------- */
+.event-timeline::before { background: linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.05)); }
+.event-timeline .ev::before { background: #fff; box-shadow: none; }
+.event-timeline .ev.crit::before { background: var(--red); box-shadow: none; }
+.event-timeline .ev.high::before { background: #d9c8a3; box-shadow: none; }
+.event-timeline .ev.ok::before { background: #e8ece9; box-shadow: none; }
+
+.score-film { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.1); }
+.score-film .sf-val { color: #fff; text-shadow: none; }
+.score-film .sf-cap { color: var(--text-dim); }
+
+/* --------------------------------------------------------------------------
+   19. LIVE TELEMETRY — monochrome layer
+   -------------------------------------------------------------------------- */
+.aq-tele-title { color: var(--text-hi); }
+.badge-tag { color: #d9c8a3; background: rgba(217,200,163,0.08); border-color: rgba(217,200,163,0.28); }
+.aq-tele-label { color: var(--text-dim); }
+.tele-live-pill { color: #e8e8e8; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.18); box-shadow: none; }
+.aq-btn-ok { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.22); color: #e8e8e8; }
+.aq-btn-ok:hover { color: #fff; }
+.aq-btn-danger { background: rgba(226,109,109,0.1); border-color: rgba(226,109,109,0.35); color: #e26d6d; }
+.aq-btn-danger:hover { color: #fff; }
+.aq-btn-holo { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.22); }
+.aq-preset-box { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.08); border-radius: 12px; }
+
+.aq-tele-stats .ts-cell { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.09); border-radius: 10px; }
+.ts-num { color: #fff; }
+.ts-cap { color: var(--text-mut); }
+
+.crit-banner {
+  background: #101316;
+  border: 1px solid rgba(226,109,109,0.3);
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px rgba(226,109,109,0.08);
+}
+.crit-pulse { color: var(--red); }
+.crit-text strong { color: #f0b6b6; }
+.crit-text span { color: #fff; }
+
+.stream-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.09); border-radius: 10px; }
+.stream-time { color: var(--text-mut); }
+.stream-meter { color: #fff; font-weight: 700; }
+.stream-usage { color: #fff; }
+.stream-sev { color: #d9d9d9; background: rgba(255,255,255,0.05); }
+
+.sev-normal { color: #d7dad9 !important; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.16) !important; }
+.sev-low { color: #d9d9d9 !important; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.16) !important; }
+.sev-medium { color: #d9c8a3 !important; background: rgba(217,200,163,0.08); border: 1px solid rgba(217,200,163,0.3) !important; }
+.sev-high { color: #e8e8e8 !important; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.3) !important; }
+.sev-critical { color: #f0b6b6 !important; background: rgba(226,109,109,0.1); border: 1px solid rgba(226,109,109,0.38) !important; }
+.risk-badge { font-weight: 700; }
+
+.aq-table thead th { color: var(--text-mut); border-color: rgba(255,255,255,0.12); background: #0b0d0f; }
+.aq-table tbody td { border-color: rgba(255,255,255,0.05); }
+.aq-table tr:hover td { background: rgba(255,255,255,0.03); }
+.aq-mini { border-color: rgba(255,255,255,0.2); color: #fff; background: transparent; }
+.aq-mini:hover { background: rgba(255,255,255,0.08); }
+
+.aq-flow { background: rgba(255,255,255,0.08); }
+.aq-flow-fill { background: #d9d9d9; box-shadow: none; }
+
+.rc { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.09); border-radius: 10px; }
+.rc-num { color: #fff; }
+.rc-cap { color: var(--text-mut); }
+.rc-blue .rc-num, .rc-amber .rc-num, .rc-orange .rc-num { color: #d9d9d9; }
+.rc-red .rc-num { color: #e26d6d; }
+
+.aq-dq-list li { background: rgba(255,255,255,0.02); }
+.dq-pill { color: #d9c8a3; background: rgba(217,200,163,0.08); border-color: rgba(217,200,163,0.26); }
+
+.ev-card { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.09); border-radius: 10px; }
+.ev-card:hover { border-color: rgba(255,255,255,0.25); transform: translateX(3px); }
+.ev-card.ev-open { border-left: 2px solid var(--red); }
+.ev-sev { color: #d9d9d9; background: rgba(255,255,255,0.05); }
+.ev-score { color: #fff; }
+.ev-time { color: var(--text-mut); }
+.ev-type { color: #fff; }
+.ev-dev { color: var(--text-dim); }
+
+.eg-cell { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.09); border-radius: 10px; }
+.eg-num { color: #e8e8e8; }
+.eg-cap { color: var(--text-mut); }
+
+.rx-backdrop { background: rgba(3,4,5,0.6); }
+.rx-drawer {
+  background: linear-gradient(180deg, #101316, #0b0d0f);
+  border-left: 1px solid rgba(255,255,255,0.12);
+  box-shadow: -24px 0 60px rgba(0,0,0,0.7);
+}
+.rx-head { border-color: rgba(255,255,255,0.08); }
+.rx-kicker { color: #e26d6d; }
+.rx-facts b { color: #fff; }
+.rx-facts span { color: var(--text-mut); }
+.rx-sec-title { color: var(--text-dim); }
+.rx-list li { color: #fff; background: rgba(255,255,255,0.02); border-left: 2px solid rgba(255,255,255,0.3); }
+.rx-actions { border-top-color: rgba(255,255,255,0.08); }
+
+/* --------------------------------------------------------------------------
+   20. SCROLLBARS / FOCUS — neutral
+   -------------------------------------------------------------------------- */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: rgba(5,6,7,0.9); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.16); border-radius: 99px; border: 2px solid rgba(5,6,7,.9); }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.28); }
+* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.2) rgba(5,6,7,.9); }
+
+:focus-visible { outline: 2px solid rgba(255,255,255,0.5); outline-offset: 2px; border-radius: 6px; }
+.holo-input::placeholder, .holo-select::placeholder { color: var(--text-mut) !important; }
+
+/* --------------------------------------------------------------------------
+   21. RESPONSIVE — DESIGN 3 layout
+   -------------------------------------------------------------------------- */
+@media (max-width: 1080px) {
+  .geo-hero { grid-template-columns: 1fr; }
+  .geo-hero-visual { order: -1; }
+  .geo-globe-holder { width: min(280px, 78vw); }
+  .kpi-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 760px) {
+  .app-container { padding: calc(var(--nav-h) + 12px) 12px 96px; }
+  .water-hero { padding: 22px 18px 12px; border-radius: 16px; }
+  .geo-hero-title { font-size: 36px; }
+  .kpi-row { grid-template-columns: 1fr; }
+  .kpi-card .kpi-number { font-size: 26px; }
+  .geo-hero-meta { gap: 12px; }
+  .sat-coords { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}Telemetry Data Matrix — AquaGuard AI{% endblock %}
+
+{% block content %}
+<!-- Top Summary Metrics Bar -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="glass-panel p-3">
+      <div class="text-secondary small fw-bold font-mono">TOTAL OBSERVATIONS</div>
+      <div class="h4 text-white fw-bold mb-0 font-mono">{{ total_records | default(0) }}</div>
+      <div class="small text-muted font-mono">Ingested telemetry rows</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="glass-panel p-3">
+      <div class="text-secondary small fw-bold font-mono">ACTIVE METER NODES</div>
+      <div class="h4 text-info fw-bold mb-0 font-mono">{{ unique_meters | default(0) }}</div>
+      <div class="small text-muted font-mono">Monitored endpoints</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="glass-panel p-3">
+      <div class="text-secondary small fw-bold font-mono">TEMPORAL INCEPTION</div>
+      <div class="h6 text-white fw-bold mb-0 font-mono">{{ first_date.strftime('%Y-%m-%d %H:%M') if first_date else 'N/A' }}</div>
+      <div class="small text-muted font-mono">Initial log timestamp</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="glass-panel p-3">
+      <div class="text-secondary small fw-bold font-mono">LATEST OBSERVATION</div>
+      <div class="h6 text-white fw-bold mb-0 font-mono">{{ last_date.strftime('%Y-%m-%d %H:%M') if last_date else 'N/A' }}</div>
+      <div class="small text-muted font-mono">Most recent reading</div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter & Export Toolbar -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 p-3 glass-panel mb-4">
+  <form method="GET" action="{{ url_for('main.data_preview') }}" class="d-flex align-items-center gap-2">
+    <label class="text-secondary small fw-bold mb-0 font-mono text-nowrap">METER FILTER:</label>
+    <select name="meter_id" class="form-select holo-select form-select-sm" onchange="this.form.submit()">
+      <option value="">All Monitored Meters</option>
+      {% for m in meters %}
+      <option value="{{ m.meter_id }}" {% if selected_meter == m.meter_id %}selected{% endif %}>{{ m.meter_id }} ({{ m.location }})</option>
+      {% endfor %}
+    </select>
+  </form>
+
+  <div class="d-flex gap-2">
+    <a href="/api/export/csv" class="btn btn-sm btn-holo-alt">
+      <i class="bi bi-filetype-csv me-1 text-success"></i> Export CSV
+    </a>
+    <a href="/api/export/excel" class="btn btn-sm btn-holo-alt">
+      <i class="bi bi-file-earmark-excel me-1 text-success"></i> Export Excel
+    </a>
+  </div>
+</div>
+
+<!-- Readings Table -->
+<div class="glass-panel p-4 mb-4">
+  <div class="table-responsive">
+    <table class="holo-table">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Meter ID</th>
+          <th>Flow (Liters)</th>
+          <th>Baseline (L)</th>
+          <th>Z-Score</th>
+          <th>Nocturnal</th>
+          <th>Weekend</th>
+          <th>Classification</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if readings %}
+          {% for r in readings %}
+          <tr>
+            <td><code class="text-info font-mono">{{ r.timestamp.strftime('%Y-%m-%d %H:%M') }}</code></td>
+            <td><strong class="text-white font-mono">{{ r.meter_id }}</strong></td>
+            <td><span class="fw-bold text-white font-mono">{{ "%.1f"|format(r.usage_liters) }}</span></td>
+            <td><span class="text-secondary font-mono">{{ "%.1f"|format(r.rolling_mean) if r.rolling_mean else '—' }}</span></td>
+            <td>
+              {% if r.z_score is not none %}
+              <span class="font-mono {% if r.z_score > 2.5 %}text-danger fw-bold{% elif r.z_score < -2.0 %}text-warning{% else %}text-muted{% endif %}">
+                {{ "%+.2f"|format(r.z_score) }}
+              </span>
+              {% else %}
+              <span class="text-muted font-mono">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if r.is_night %}
+              <span class="badge bg-secondary text-info font-mono" style="font-size: 10px;"><i class="bi bi-moon-fill me-1"></i> Night</span>
+              {% else %}
+              <span class="badge bg-dark text-muted font-mono" style="font-size: 10px;">Day</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if r.is_weekend %}
+              <span class="badge bg-secondary text-warning font-mono" style="font-size: 10px;">Weekend</span>
+              {% else %}
+              <span class="badge bg-dark text-muted font-mono" style="font-size: 10px;">Weekday</span>
+              {% endif %}
+            </td>
+            <td><small class="text-secondary font-mono">{{ r.activity_type or 'General' }}</small></td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="8" class="text-center py-5 text-muted">
+              No telemetry found in database.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Controls -->
+  {% if pagination and pagination.pages > 1 %}
+  <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top border-secondary border-opacity-10 font-mono">
+    <div class="text-muted small">
+      Observation page {{ pagination.page }} of {{ pagination.pages }}
+    </div>
+    <ul class="pagination pagination-sm mb-0">
+      {% if pagination.has_prev %}
+      <li class="page-item"><a class="page-link bg-dark text-white border-secondary" href="{{ url_for('main.data_preview', page=pagination.prev_num, meter_id=selected_meter) }}">Previous</a></li>
+      {% endif %}
+      <li class="page-item active"><span class="page-link bg-info border-info text-dark">{{ pagination.page }}</span></li>
+      {% if pagination.has_next %}
+      <li class="page-item"><a class="page-link bg-dark text-white border-secondary" href="{{ url_for('main.data_preview', page=pagination.next_num, meter_id=selected_meter) }}">Next</a></li>
+      {% endif %}
+    </ul>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

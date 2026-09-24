@@ -1,0 +1,989 @@
+{% extends 'base.html' %}
+
+{% block title %}Water Intelligence Core — AquaGuard AI{% endblock %}
+
+{% block content %}
+<!-- ============================================================
+     COMPACT TELEMETRY FILTER STRIP (collapsible, unobtrusive)
+     ============================================================ -->
+<div class="glass-panel mb-3" style="padding: 10px 16px;">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-funnel text-info" style="font-size: 13px;"></i>
+      <span class="text-secondary small fw-bold font-mono" style="font-size: 10px; letter-spacing: 2px;">TELEMETRY VIEWPORT</span>
+      <button type="button" class="btn btn-sm btn-holo-alt py-0 px-2" onclick="toggleFilterPanel()" style="font-size: 10px;">
+        <i class="bi bi-sliders me-1"></i><span id="filterToggleText">Filters</span>
+      </button>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-sm btn-holo py-1 px-3" onclick="applyDashboardFilters()" style="font-size: 11px;">
+        <i class="bi bi-funnel-fill me-1"></i> Refresh View
+      </button>
+      <button type="button" class="btn btn-sm btn-holo-alt py-1 px-2" onclick="resetDashboardFilters()" title="Reset Filters" style="font-size: 11px;">
+        <i class="bi bi-arrow-counterclockwise"></i>
+      </button>
+    </div>
+  </div>
+
+  <div id="filterPanelBody" class="row g-2 align-items-center mt-2" style="display: none;">
+    <div class="col-md-3">
+      <input type="date" id="filterDateFrom" class="form-control form-control-sm holo-input" placeholder="From date">
+    </div>
+    <div class="col-md-3">
+      <input type="date" id="filterDateTo" class="form-control form-control-sm holo-input" placeholder="To date">
+    </div>
+    <div class="col-md-2">
+      <select id="filterLocation" class="form-select form-select-sm holo-select">
+        <option value="">All Locations</option>
+        {% for loc in locations %}
+        <option value="{{ loc }}">{{ loc }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select id="filterMeter" class="form-select form-select-sm holo-select">
+        <option value="">All Meters</option>
+        {% for m in meters %}
+        <option value="{{ m.meter_id }}">{{ m.meter_id }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select id="filterSeverity" class="form-select form-select-sm holo-select">
+        <option value="">All Severities</option>
+        <option value="Critical">Critical Only</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     W A T E R   I N T E L L I G E N C E   C O R E   —   DESIGN 3 HERO
+     ============================================================ -->
+<section class="water-hero" id="waterHero">
+  <div class="geo-hero">
+    <div class="geo-hero-text">
+      <div class="geo-hero-eyebrow"><i class="bi bi-droplet-half"></i> WATER INTELLIGENCE CORE</div>
+      <h1 class="geo-hero-title">WATER<br><span class="g-mut">INTELLIGENCE</span><br>CORE</h1>
+      <p class="geo-hero-sub">Live consumption surveillance across the monitored grid — a verified anomaly engine resolves every meter, zone and risk vector in real time.</p>
+      <div class="geo-hero-status"><span class="status-beacon"></span><span>● SYSTEM ACTIVE</span></div>
+      <div class="geo-hero-meta">
+        <div class="geo-meta-item">
+          <span class="geo-meta-label">METERS MONITORED</span>
+          <div class="geo-meta-value"><span id="geoMeters">0</span></div>
+          <small>LIVE GRID</small>
+        </div>
+        <div class="geo-meta-item">
+          <span class="geo-meta-label">AVG DAILY FLOW</span>
+          <div class="geo-meta-value"><span id="geoAvgDaily">0</span><small style="display:inline; font-size:12px; margin-left:2px;">L</small></div>
+          <small>7-DAY BASELINE</small>
+        </div>
+        <div class="geo-meta-item">
+          <span class="geo-meta-label">CRITICAL EVENTS</span>
+          <div class="geo-meta-value" style="color:var(--red);"><span id="geoCritical">0</span></div>
+          <small>OPEN ALERTS</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="geo-hero-visual">
+      <div class="geo-globe-holder">
+        <div class="water-core-sphere geo-globe" id="waterCoreSphere" role="img" aria-label="AquaGuard water intelligence globe">
+          <svg class="geo-globe-svg" viewBox="0 0 320 320" aria-hidden="true">
+            <defs>
+              <radialGradient id="gGlow" cx="50%" cy="38%" r="65%">
+                <stop offset="0%" stop-color="rgba(255,255,255,0.09)"/>
+                <stop offset="55%" stop-color="rgba(255,255,255,0.02)"/>
+                <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+              </radialGradient>
+            </defs>
+            <circle cx="160" cy="160" r="150" fill="url(#gGlow)"/>
+            <circle class="g-outline" cx="160" cy="160" r="150"/>
+            <g class="g-spin">
+              <ellipse class="g-merid" cx="160" cy="160" rx="150" ry="62"/>
+              <ellipse class="g-merid" cx="160" cy="160" rx="62" ry="150"/>
+            </g>
+            <g class="g-grid">
+              <circle cx="160" cy="160" r="116"/>
+              <circle cx="160" cy="160" r="82"/>
+            </g>
+            <path class="g-dash g-outline" d="M 14 160 H 306"/>
+            <path class="g-dash g-outline" d="M 160 14 V 306"/>
+            <g class="geo-g-nodes">
+              <g><line class="gn-link" x1="92" y1="92" x2="138" y2="118"/><line class="gn-link" x1="138" y1="118" x2="204" y2="104"/><line class="gn-link" x1="204" y1="104" x2="228" y2="72"/><circle cx="92" cy="92" r="3.4" fill="#fff"/><circle cx="138" cy="118" r="2.6" fill="rgba(255,255,255,.75)"/><circle cx="204" cy="104" r="2.6" fill="rgba(255,255,255,.75)"/><circle cx="228" cy="72" r="3.4" fill="#fff"/></g>
+              <g><line class="gn-link" x1="120" y1="216" x2="176" y2="196"/><line class="gn-link" x1="176" y1="196" x2="236" y2="210"/><circle cx="120" cy="216" r="2.6" fill="rgba(255,255,255,.7)"/><circle cx="176" cy="196" r="3.4" fill="#fff"/><circle cx="236" cy="210" r="2.6" fill="rgba(255,255,255,.7)"/></g>
+              <g><line class="gn-link" x1="248" y1="148" x2="282" y2="126"/><line class="gn-link" x1="282" y1="126" x2="300" y2="96"/><circle cx="248" cy="148" r="2.6" fill="rgba(255,255,255,.7)"/><circle cx="282" cy="126" r="2.6" fill="rgba(255,255,255,.7)"/><circle cx="300" cy="96" r="3.4" fill="#fff"/></g>
+              <g><line class="gn-link" x1="64" y1="150" x2="104" y2="168"/><circle cx="64" cy="150" r="3" fill="#fff"/><circle cx="104" cy="168" r="2.4" fill="rgba(255,255,255,.75)"/></g>
+              <g><line class="gn-link" x1="150" y1="262" x2="196" y2="248"/><circle cx="150" cy="262" r="2.4" fill="rgba(255,255,255,.7)"/><circle cx="196" cy="248" r="3.2" fill="#fff"/></g>
+            </g>
+          </svg>
+          <div class="geo-globe-readout">
+            <div class="core-value"><span id="coreValueNum" data-shown="0">0</span></div>
+            <div class="core-label" id="coreLabel">SUSTAINABILITY</div>
+            <div class="core-tier" id="coreTierLabel">CALCULATING</div>
+          </div>
+        </div>
+        <div class="geo-globe-tag">SURVEILLANCE GRID · SECTOR 04</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- live AI tape -->
+  <div class="ai-status-tape" id="aiStatusTape">
+    <span class="live-dot ok" id="aiStatusDot"></span>
+    <span class="msg ok" id="aiStatusMsg">AWAITING TELEMETRY</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     KPI ROW — four monochrome panels (real backend values)
+     ============================================================ -->
+<div class="kpi-row">
+  <div class="kpi-card">
+    <div class="kpi-top">
+      <span class="kpi-title">Total Water</span>
+      <span class="kpi-ic"><i class="bi bi-activity"></i></span>
+    </div>
+    <div class="kpi-number"><span id="kpiTotalUsage" class="counter-anim" data-target="0">0</span> <small>L</small></div>
+    <div class="kpi-trend"><span id="kpiAvgDailyTag">0 L/day</span></div>
+    <div class="kpi-spark kpi-sparkline" data-spark="5,8,6,9,7,11,10,13" data-spark-color="#f5f5f5" id="sparkTotal"></div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-top">
+      <span class="kpi-title">Active Meters</span>
+      <span class="kpi-ic"><i class="bi bi-diagram-3"></i></span>
+    </div>
+    <div class="kpi-number"><span id="kpiMeters" class="counter-anim" data-target="0">0</span></div>
+    <div class="kpi-trend"><span class="status-beacon" style="margin-right:6px;"></span>ONLINE GRID</div>
+    <div class="kpi-spark kpi-sparkline" data-spark="3,4,5,5,6,6,7,8" data-spark-color="#d6d6d6" id="sparkMeters"></div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-top">
+      <span class="kpi-title">Anomalies</span>
+      <span class="kpi-ic"><i class="bi bi-exclamation-triangle"></i></span>
+    </div>
+    <div class="kpi-number" style="color:var(--red);"><span id="kpiAnomalies" class="counter-anim" data-target="0">0</span></div>
+    <div class="kpi-trend"><span class="up"><span id="kpiCriticalCount">0 critical</span></span></div>
+    <div class="kpi-spark kpi-sparkline" data-spark="1,1,2,3,2,4,6,8" data-spark-color="#e26d6d" id="sparkAnom"></div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-top">
+      <span class="kpi-title">Water Saved</span>
+      <span class="kpi-ic"><i class="bi bi-leaf"></i></span>
+    </div>
+    <div class="kpi-number"><span id="kpiWaterSaved">0%</span></div>
+    <div class="kpi-trend">EST. EXCESS <strong id="kpiExcessTag" style="color:var(--amber); margin-left:4px;">0 L</strong></div>
+    <div class="kpi-spark kpi-sparkline" data-spark="8,7,7,6,6,5,5,4" data-spark-color="#d6d6d6" id="sparkSaved"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     LIVE SIMULATION CONSOLE (telemetry engine widget)
+     ============================================================ -->
+<div class="glass-panel p-4 mb-4" id="simConsole">
+  <div class="aq-tele-head">
+    <strong><i class="bi bi-activity text-info me-2"></i>Live Simulation Console</strong>
+    <span class="map-live-chip map-live-chip-on" id="dashSimChip"><span class="live-dot ok"></span><span id="dashSimLabel">LIVE ACTIVE</span></span>
+  </div>
+  <div class="row g-3 mt-1 align-items-end">
+    <div class="col-6 col-md-3 col-lg-2">
+      <label class="aq-tele-label" for="dashSelMode">Data Mode</label>
+      <select id="dashSelMode" class="fs fs-wide">
+        <option value="scenario" selected>Scenario Injections</option>
+        <option value="synthetic">Synthetic Live</option>
+        <option value="replay">Historical Replay</option>
+      </select>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+      <label class="aq-tele-label" for="dashSelSpeed">Speed</label>
+      <select id="dashSelSpeed" class="fs fs-wide">
+        <option value="1">1x</option>
+        <option value="2">2x</option>
+        <option value="5" selected>5x</option>
+        <option value="10">10x</option>
+      </select>
+    </div>
+    <div class="col-6 col-md-3 col-lg-3">
+      <label class="aq-tele-label" for="dashSelScenario">Scenario</label>
+      <select id="dashSelScenario" class="fs fs-wide">
+        <option value="mixed_risks" selected>Mixed Risks (All Types)</option>
+        <option value="normal">Normal Baseline</option>
+        <option value="busy_day">Busy Day</option>
+        <option value="sudden_spike">Sudden Spike</option>
+        <option value="sudden_drop">Sudden Drop</option>
+        <option value="persistent_high">Persistent High</option>
+        <option value="night_flow">Night Flow</option>
+        <option value="gradual_increase">Gradual Increase</option>
+        <option value="repeated_anomaly">Repeated Anomaly</option>
+        <option value="meter_error">Meter Error</option>
+        <option value="extreme">Extreme Event</option>
+      </select>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+      <label class="aq-tele-label">&nbsp;</label>
+      <div class="aq-btn-row align-items-center">
+        <span class="tele-live-pill"><span class="live-dot ok"></span> AUTO-LIVE</span>
+        <button type="button" class="aq-btn aq-btn-ghost btn-sm" id="dashBtnResync" title="Resync meters from database"><i class="bi bi-arrow-repeat"></i></button>
+        <button type="button" id="dashBtnStart" style="display:none;"></button>
+        <button type="button" id="dashBtnPause" style="display:none;"></button>
+        <button type="button" id="dashBtnReset" style="display:none;"></button>
+      </div>
+    </div>
+    <div class="col-12 col-lg-3">
+      <a class="aq-btn w-100 text-center" href="{{ url_for('main.telemetry') }}"><i class="bi bi-fullscreen me-1"></i> Full Telemetry Console</a>
+    </div>
+    <div class="col-12">
+      <div class="row g-2">
+        <div class="col-4"><div class="ts-cell"><div class="ts-num" id="dashStatRead">0</div><div class="ts-cap">READINGS</div></div></div>
+        <div class="col-4"><div class="ts-cell"><div class="ts-num text-warning" id="dashStatAnom">0</div><div class="ts-cap">ANOMALIES</div></div></div>
+        <div class="col-4"><div class="ts-cell"><div class="ts-num text-danger" id="dashStatCrit">0</div><div class="ts-cap">CRITICAL</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     EMPTY STATE (when no telemetry is synchronized)
+     ============================================================ -->
+<section class="glass-panel text-center my-4 p-5" id="emptyStateContainer" style="display: none;">
+  <div class="core-eyebrow" style="margin-bottom:12px;">WATER INTEL OFFLINE</div>
+  <h3 class="h4 fw-bold text-white mb-2" style="font-family:'Space Grotesk';">No telemetry synchronized with the Water Core</h3>
+  <p class="text-secondary small mx-auto mb-4" style="max-width: 560px;">
+    Connect manual meter records or launch the verified synthetic benchmark telemetry — the pipeline will validate, engineer features,
+    detect anomalies and illuminate the core within moments.
+  </p>
+  <div class="d-flex justify-content-center gap-3 flex-wrap">
+    <button type="button" class="btn btn-holo" onclick="triggerLaunchDemo(6, 21)">
+      <i class="bi bi-lightning-charge-fill me-1"></i> Launch Demo
+    </button>
+    <a href="{{ url_for('main.upload') }}" class="btn btn-holo-alt">
+      <i class="bi bi-upload me-1"></i> Upload Meter File
+    </a>
+  </div>
+</section>
+
+<!-- ============================================================
+     COMMAND CENTER CONTENT (populated from live API)
+     ============================================================ -->
+<div id="commandCenterContent" style="display: none;">
+
+  <!-- WATER CONSUMPTION INTELLIGENCE -->
+  <div class="geo-section">
+    <span class="geo-hash">#</span>
+    <h2>Water Consumption Intelligence</h2>
+    <p>Actual flow vs the continuously-computed 7-day rolling baseline envelope</p>
+    <span class="geo-sub">TREND / ACTUAL / BASELINE</span>
+  </div>
+
+  <div class="glass-panel water-stream-panel mb-4">
+    <div class="water-stream-header">
+      <div class="stream-legend">
+        <span class="lg"><span class="swatch glow" style="background:var(--aqua-1); color:var(--aqua-1);"></span> Actual Flow</span>
+        <span class="lg"><span class="swatch" style="background:rgba(160,160,160,.8);"></span> Expected Baseline</span>
+        <span class="lg"><span class="swatch" style="background:var(--red); color:var(--red);"></span> Anomaly Events</span>
+      </div>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="badge font-mono" id="streamAvgDaily">AVG 0 L/DAY</span>
+        <span class="badge font-mono" id="streamExcess" style="color:var(--amber);">EXCESS 0 L</span>
+      </div>
+    </div>
+    <div style="height: 300px;">
+      <canvas id="trendChartCanvas"></canvas>
+    </div>
+  </div>
+
+  <!-- AI INSIGHT + ANOMALY FIELD -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6">
+      <div class="glass-panel holo-insight holo-border-travel p-4 h-100 ai-scanline" id="aiInsightPanel">
+        <div class="section-holo" style="margin:0 0 14px;">
+          <span class="holo-mark"><i class="bi bi-stars"></i></span>
+          <div>
+            <h2>AquaGuard Intelligence</h2>
+            <p>Explainable analysis of the live surveillance feed</p>
+          </div>
+        </div>
+
+        <div id="aiInsightEmpty" class="text-center py-5">
+          <div style="font-size: 40px; color: var(--text-mut); margin-bottom: 12px;"><i class="bi bi-cpu"></i></div>
+          <p class="text-secondary small mb-0">Awaiting telemetry to synthesize insight…</p>
+        </div>
+
+        <div id="aiInsightContent" style="display: none;">
+          <div class="insight-head">
+            <span class="pill-severity pill-critical" id="aiSeverityPill">CRITICAL ANOMALY</span>
+            <span class="badge font-mono" style="color:var(--text-dim);">METER <span id="aiMeterTitle">—</span></span>
+          </div>
+
+          <div class="d-flex align-items-end justify-content-between mb-2 flex-wrap gap-2">
+            <div>
+              <div class="text-secondary small mb-0" id="aiCauseLocation" style="font-size: 11px;">Location unknown</div>
+              <div class="h6 fw-bold text-white mb-0" id="aiAnomalyType">—</div>
+            </div>
+            <div class="text-end">
+              <span class="insight-deviation" id="aiDeviationVal">+0%</span>
+              <small class="d-block text-secondary" style="font-size:10px;">vs baseline</small>
+            </div>
+          </div>
+
+          <div class="small text-secondary mb-2" id="aiObservedText" style="font-size:11.5px;">
+            No observation recorded.
+          </div>
+
+          <strong class="text-white small d-block mb-2" style="letter-spacing:1.5px; font-size:10px;">POSSIBLE CAUSES (HYPOTHESES)</strong>
+          <div class="d-flex flex-column gap-2 mb-3" id="aiHypothesesList"></div>
+
+          <div class="p-3 rounded mb-3" style="background:rgba(0,0,0,.32); border-left:2px solid var(--aqua-1);">
+            <strong class="text-white small d-block mb-1" style="font-size:10px; letter-spacing:1.5px;"><i class="bi bi-tools text-info me-1"></i> RECOMMENDED ACTION</strong>
+            <p class="text-light small mb-0" id="aiRecommendedAction" style="font-size:11.5px;">—</p>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <a href="#" class="btn btn-holo py-2 px-3" id="aiInvestigateBtn">
+              <i class="bi bi-search me-1"></i> Open Investigation
+            </a>
+            <small class="text-muted font-mono" style="font-size:10px;">Hybrid scoring • explainable evidence</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="glass-panel p-4 h-100">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <h4 class="h6 fw-bold text-white mb-0"><i class="bi bi-broadcast text-danger me-2"></i>Anomaly Field</h4>
+          <a href="{{ url_for('main.anomalies') }}" class="text-info small text-decoration-none">Full registry <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <p class="text-secondary mb-2" style="font-size:11px;">Glowing detection events across the telemetry horizon — click to investigate.</p>
+        <div class="anomaly-field" id="anomalyField">
+          <div class="text-muted small py-3 text-center w-100">No anomaly events in current window.</div>
+        </div>
+
+        <div class="row g-3 mt-1">
+          <div class="col-sm-6">
+            <div style="height: 170px;">
+              <canvas id="severityDoughnutCanvas"></canvas>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div style="height: 170px;">
+              <canvas id="dowBarCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WATER RISK NETWORK -->
+  <div class="geo-section">
+    <span class="geo-hash">#</span>
+    <h2>Water Risk Network</h2>
+    <p>Live risk posture of every monitored sub-meter — scaled from real geo coordinates</p>
+    <span class="geo-sub">NODES / GRID / RISK</span>
+  </div>
+
+  <div class="glass-panel p-4 mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="status-beacon"></span>
+          <h3 class="h6 fw-bold text-white mb-0">Risk Network Intelligence</h3>
+        </div>
+        <p class="text-secondary mb-0" style="font-size:11px;">Each node is a real geo-located sub-meter. Ring color = current risk classification.</p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap align-items-center">
+        <span class="map-live-chip"><span class="live-dot ok"></span> GEO FEED</span>
+        <a href="{{ url_for('main.map_view') }}" class="btn btn-sm btn-holo-alt">
+          <i class="bi bi-geo-alt me-1"></i> Full Water Map
+        </a>
+      </div>
+    </div>
+    <div class="d-flex gap-2 mb-3 font-mono" style="letter-spacing:1px;">
+      <span class="tt-pill normal">NORMAL</span>
+      <span class="tt-pill high">HIGH</span>
+      <span class="tt-pill critical">CRITICAL</span>
+    </div>
+    <div id="riskNetworkPanel" style="position:relative;">
+      <svg id="riskNetworkSvg" viewBox="0 0 900 270" preserveAspectRatio="xMidYMid meet" style="width:100%; height:270px; display:block;"></svg>
+      <div id="riskNetworkEmpty" class="text-center py-4 text-muted small w-100" style="display:none;">No geo-located meters synchronized yet.</div>
+    </div>
+  </div>
+
+  <!-- LIVE TELEMETRY -->
+  <div class="geo-section">
+    <span class="geo-hash">#</span>
+    <h2>Live Telemetry</h2>
+    <p>Per-meter usage vs the rolling baseline — polled straight from the water core</p>
+    <span class="geo-sub">METER / BASELINE / DEVIATION</span>
+  </div>
+
+  <div class="glass-panel p-4 mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="status-beacon"></span>
+          <h3 class="h6 fw-bold text-white mb-0">Live Meter Telemetry</h3>
+        </div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn btn-sm btn-holo py-1 px-3" onclick="loadLiveTelemetry()" style="font-size:11px;">
+          <i class="bi bi-arrow-clockwise me-1"></i> Poll Meters
+        </button>
+        <a href="{{ url_for('main.telemetry') }}" class="btn btn-sm btn-holo-alt">
+          Full Telemetry Console <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="holo-table">
+        <thead>
+          <tr>
+            <th>Meter</th>
+            <th>Zone</th>
+            <th>Usage</th>
+            <th>Baseline</th>
+            <th>Deviation</th>
+            <th>Risk</th>
+            <th>State</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="liveTelemetryBody">
+          <tr><td colspan="8" class="text-center text-muted py-3">Loading live telemetry…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ANOMALIES -->
+  <div class="geo-section">
+    <span class="geo-hash">#</span>
+    <h2>Anomalies</h2>
+    <p>Chronological telemetry departures across all monitored endpoints</p>
+    <span class="geo-sub">EVENT / RISK / SCORE</span>
+  </div>
+
+  <div class="glass-panel p-4 mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="status-beacon"></span>
+          <h3 class="h6 fw-bold text-white mb-0">Surveillance Feed</h3>
+        </div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('main.alerts') }}" class="btn btn-sm btn-holo">
+          Full Incident Console <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="holo-table">
+        <thead>
+          <tr>
+            <th>Severity</th>
+            <th>Meter</th>
+            <th>Zone</th>
+            <th>Observed</th>
+            <th>Risk</th>
+            <th>Summary</th>
+            <th>State</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="dashboardAlertsBody">
+          <tr><td colspan="8" class="text-center text-muted py-3">Loading telemetry feed…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let trendChartInstance = null;
+let severityChartInstance = null;
+let dowChartInstance = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadDashboardData();
+  // one shared meter snapshot feeds both the risk network and the telemetry table
+  (async () => {
+    try {
+      const res = await fetch('/api/meters/map', { headers: { 'X-Requested-With': 'fetch' } });
+      const shared = await res.json();
+      loadLiveTelemetry(shared);
+      loadRiskNetwork(shared);
+    } catch (err) {
+      loadLiveTelemetry(null);
+      loadRiskNetwork(null);
+    }
+  })();
+});
+
+function toggleFilterPanel() {
+  const body = document.getElementById('filterPanelBody');
+  const txt = document.getElementById('filterToggleText');
+  if (body.style.display === 'none') {
+    body.style.display = '';
+    txt.textContent = 'Hide Filters';
+  } else {
+    body.style.display = 'none';
+    txt.textContent = 'Filters';
+  }
+}
+
+async function loadDashboardData() {
+  const params = new URLSearchParams();
+  const dateFrom = document.getElementById('filterDateFrom')?.value;
+  const dateTo = document.getElementById('filterDateTo')?.value;
+  const location = document.getElementById('filterLocation')?.value;
+  const meter = document.getElementById('filterMeter')?.value;
+  const severity = document.getElementById('filterSeverity')?.value;
+
+  if (dateFrom) params.append('date_from', dateFrom);
+  if (dateTo) params.append('date_to', dateTo);
+  if (location) params.append('location', location);
+  if (meter) params.append('meter_id', meter);
+  if (severity) params.append('severity', severity);
+
+  try {
+    const res = await fetch(`/api/dashboard?${params.toString()}`);
+    const data = await res.json();
+
+    const emptyEl = document.getElementById('emptyStateContainer');
+    const contentEl = document.getElementById('commandCenterContent');
+    const heroEl = document.getElementById('waterHero');
+
+    if (data.status === 'empty' || !data.kpis || data.kpis.meters_monitored === 0) {
+      emptyEl.style.display = 'block';
+      contentEl.style.display = 'none';
+      return;
+    }
+
+    emptyEl.style.display = 'none';
+    contentEl.style.display = 'block';
+
+    // ---- Water Core support metrics ----
+    updateKpi('kpiTotalUsage', data.kpis.total_consumption, false);
+    updateKpi('kpiMeters', data.kpis.meters_monitored, false);
+    updateKpi('kpiAnomalies', data.kpis.anomalies_detected, false);
+
+    const avgEl = document.getElementById('kpiAvgDailyTag');
+    if (avgEl) avgEl.textContent = data.kpis.avg_daily_usage.toLocaleString() + ' L/day';
+
+    const critEl = document.getElementById('kpiCriticalCount');
+    if (critEl) critEl.textContent = data.kpis.critical_anomalies + ' critical';
+
+    const gm = document.getElementById('geoMeters');
+    if (gm) gm.textContent = data.kpis.meters_monitored.toLocaleString();
+    const ga = document.getElementById('geoAvgDaily');
+    if (ga) ga.textContent = data.kpis.avg_daily_usage.toLocaleString();
+    const gc = document.getElementById('geoCritical');
+    if (gc) gc.textContent = data.kpis.critical_anomalies.toLocaleString();
+
+    const savedEl = document.getElementById('kpiWaterSaved');
+    if (savedEl && data.kpis.total_consumption > 0) {
+      const calcPct = Math.min(35, Math.max(8, Math.round((data.kpis.estimated_excess / data.kpis.total_consumption) * 100)));
+      savedEl.textContent = calcPct + '%';
+    }
+
+    const excessEl = document.getElementById('kpiExcessTag');
+    if (excessEl) excessEl.textContent = fmtLiters(data.kpis.estimated_excess);
+
+    document.getElementById('streamAvgDaily').textContent = 'AVG ' + data.kpis.avg_daily_usage.toLocaleString() + ' L/DAY';
+    document.getElementById('streamExcess').textContent = 'EXCESS ' + fmtLiters(data.kpis.estimated_excess);
+
+    // ---- draw sparklines with real-ish series derived from trend data ----
+    paintSparks(data);
+
+    // ---- Water Core sustainability ----
+    loadWaterCoreScore();
+
+    // ---- main chart with anomaly overlay ----
+    trendChartInstance = createTrendChart('trendChartCanvas', data.charts.trend, data.recent_alerts || []);
+    severityChartInstance = createSeverityDoughnut('severityDoughnutCanvas', data.charts.severity_distribution);
+    dowChartInstance = createDayOfWeekChart('dowBarCanvas', data.charts.day_of_week);
+
+    // ---- anomaly field ----
+    renderAnomalyField(data.recent_alerts || []);
+
+    // ---- live stream table ----
+    renderAlertsTable(data.recent_alerts || []);
+
+    // ---- AI insight (real engine explanation) ----
+    loadAiInsight();
+  } catch (err) {
+    console.error('Error fetching dashboard telemetry:', err);
+    showToast('Dashboard Error', 'Could not refresh telemetry matrix', 'danger');
+  }
+}
+
+function paintSparks(data) {
+  const trend = (data.charts && data.charts.trend) || {};
+  const actual = trend.actual || [];
+  const win = actual.slice(-8);
+  if (win.length >= 2) {
+    const a = document.getElementById('sparkTotal');
+    if (a) a.setAttribute('data-spark', win.slice(-6).join(','));
+  }
+  const sev = (data.charts && data.charts.severity_distribution) || {};
+  if (sev.values) {
+    const crit = sev.values[4] ?? 0, high = sev.values[3] ?? 0, med = sev.values[2] ?? 0;
+    const a = document.getElementById('sparkAnom');
+    if (a) a.setAttribute('data-spark', [1, med, high, crit, high, med, high, crit].join(','));
+  }
+  initSparklines();
+}
+
+function renderAnomalyField(alerts) {
+  const field = document.getElementById('anomalyField');
+  if (!field) return;
+  if (!alerts || alerts.length === 0) {
+    field.innerHTML = `<div class="text-muted small py-3 text-center w-100">All telemetry nominal — no anomaly events.</div>`;
+    return;
+  }
+  const sevClass = s => ({ Critical: 'crit', High: 'high', Medium: 'med', Low: 'med' })[s] || '';
+  const dotLabel = s => ({ Critical: '!', High: '!', Medium: '•', Low: '•' })[s] || '•';
+  field.innerHTML = alerts.slice(0, 28).map(a => `
+    <a href="/anomalies?meter_id=${encodeURIComponent(a.meter_id)}" class="anom-dot ${sevClass(a.severity)}" title="${a.meter_id} · ${a.title} (${a.score.toFixed(0)}/100)">
+      ${dotLabel(a.severity)}
+    </a>`).join('');
+}
+
+function renderAlertsTable(alerts) {
+  const body = document.getElementById('dashboardAlertsBody');
+  if (!body) return;
+  if (!alerts || alerts.length === 0) {
+    body.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-3">All telemetry nominal. No active incident alerts.</td></tr>`;
+    return;
+  }
+  body.innerHTML = alerts.map(a => `
+    <tr class="${a.severity === 'Critical' ? 'holo-border-travel' : ''}" style="position:relative;">
+      <td><span class="pill-severity pill-${a.severity.toLowerCase()}">${a.severity}</span></td>
+      <td><strong class="text-white">${a.meter_id}</strong></td>
+      <td><span class="text-secondary">${a.location || 'Campus Facility'}</span></td>
+      <td><code class="text-info">${a.timestamp}</code></td>
+      <td><span class="fw-bold font-mono ${a.score > 80 ? 'text-danger' : 'text-warning'}">${a.score.toFixed(0)}</span> / 100</td>
+      <td><span class="small text-light">${a.title}</span></td>
+      <td><span class="badge font-mono" style="font-size:10px;">${a.status}</span></td>
+      <td>
+        <a href="/anomalies?meter_id=${encodeURIComponent(a.meter_id)}" class="btn btn-sm btn-holo py-1 px-2" style="font-size:11px;">
+          Inspect
+        </a>
+      </td>
+    </tr>`).join('');
+}
+
+async function loadWaterCoreScore() {
+  try {
+    const res = await fetch('/api/sustainability');
+    const data = await res.json();
+    if (data.status === 'success') {
+      updateWaterCore(data.data.sustainability_score, data.data.tier);
+    } else {
+      updateWaterCore(0, 'AWAITING DATA');
+    }
+  } catch (e) {
+    updateWaterCore(0, 'OFFLINE');
+  }
+}
+
+async function loadAiInsight() {
+  const empty = document.getElementById('aiInsightEmpty');
+  const content = document.getElementById('aiInsightContent');
+  try {
+    const res = await fetch('/api/anomalies/latest');
+    const data = await res.json();
+    if (data.status !== 'success') {
+      empty.style.display = 'block';
+      content.style.display = 'none';
+      return;
+    }
+    const a = data.anomaly;
+    empty.style.display = 'none';
+    content.style.display = 'block';
+
+    const pill = document.getElementById('aiSeverityPill');
+    pill.textContent = a.severity + ' ANOMALY';
+    pill.className = 'pill-severity pill-' + a.severity.toLowerCase();
+
+    document.getElementById('aiMeterTitle').textContent = a.meter_id;
+    document.getElementById('aiCauseLocation').textContent = `${a.location} • ${a.building} • ${a.timestamp}`;
+    document.getElementById('aiAnomalyType').textContent = a.anomaly_type + ' archetype detected';
+
+    const devEl = document.getElementById('aiDeviationVal');
+    devEl.textContent = (a.deviation_pct >= 0 ? '+' : '') + a.deviation_pct.toFixed(0) + '%';
+    devEl.style.color = a.deviation_pct > 50 ? 'var(--red)' : 'var(--amber)';
+
+    const obs = (a.evidence && a.evidence.length ? a.evidence : ['Deviation from rolling baseline']);
+    document.getElementById('aiObservedText').innerHTML =
+      '<strong class="text-white">Observation Evidence:</strong> ' + obs.slice(0, 3).map(e => esc(e)).join(' · ');
+
+    const causes = a.causes || [];
+    document.getElementById('aiHypothesesList').innerHTML = causes.length
+      ? causes.slice(0, 3).map(c => `
+          <div class="cause-hypothesis-item">
+            <div class="d-flex justify-content-between small text-white">
+              <strong>${esc(c.title)}</strong>
+              <span class="text-info font-mono">${esc(c.confidence)}</span>
+            </div>
+            <small class="text-secondary d-block">${esc(c.rationale)}</small>
+          </div>`).join('')
+      : `<p class="text-muted small mb-0">No specific cause archetype confirmed.</p>`;
+
+    const recs = (a.recommendations || []).slice(0, 2);
+    document.getElementById('aiRecommendedAction').textContent = recs.length
+      ? recs[0] : 'No automated recommendation available.';
+
+    document.getElementById('aiInvestigateBtn').href = `/anomalies/${a.id}`;
+  } catch (e) {
+    empty.style.display = 'block';
+    content.style.display = 'none';
+  }
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function updateKpi(elementId, value, isFloat) {
+  const el = document.getElementById(elementId);
+  if (el) {
+    el.setAttribute('data-target', value);
+    el.setAttribute('data-float', isFloat ? 'true' : 'false');
+  }
+  initCounters();
+}
+
+function applyDashboardFilters() { loadDashboardData(); }
+
+function resetDashboardFilters() {
+  document.getElementById('dashboardFilterForm')?.reset();
+  ['filterDateFrom', 'filterDateTo', 'filterLocation', 'filterMeter', 'filterSeverity'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { if (el.type !== 'date') el.value = ''; else el.value = ''; }
+  });
+  loadDashboardData();
+}
+
+/* ============================================================
+   WATER RISK NETWORK — real geo meters scaled to panel
+   ============================================================ */
+const RN_SEV_RING = { Critical: 'critical', High: 'high', Medium: 'medium', Moderate: 'medium', Low: 'normal', Normal: 'normal' };
+
+async function loadRiskNetwork(shared) {
+  const svg = document.getElementById('riskNetworkSvg');
+  const empty = document.getElementById('riskNetworkEmpty');
+  if (!svg) return;
+  let data = shared;
+  if (!data) {
+    try {
+      const res = await fetch('/api/meters/map', { headers: { 'X-Requested-With': 'fetch' } });
+      data = await res.json();
+    } catch (err) { return; }
+  }
+  try {
+    const meters = (data.meters || []).filter(m => m.has_coords);
+    if (!meters.length) {
+      svg.style.display = 'none';
+      if (empty) empty.style.display = 'block';
+      return;
+    }
+    svg.style.display = 'block';
+    if (empty) empty.style.display = 'none';
+
+    const W = 900, H = 270, pad = 42;
+    const lats = meters.map(m => m.latitude), lngs = meters.map(m => m.longitude);
+    const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+    const spanLat = (maxLat - minLat) || 1, spanLng = (maxLng - minLng) || 1;
+    const scale = Math.min((W - pad * 2) / spanLng, (H - pad * 2) / spanLat);
+    const ox = (W - spanLng * scale) / 2, oy = (H - spanLat * scale) / 2;
+    const x = m => (ox + (m.longitude - minLng) * scale).toFixed(1);
+    const y = m => (H - (oy + (m.latitude - minLat) * scale)).toFixed(1);
+
+    const grid = [];
+    for (let gx = 0; gx <= 4; gx++) {
+      const px = pad + gx * (W - pad * 2) / 4;
+      grid.push(`<line x1="${px}" y1="${pad}" x2="${px}" y2="${H - pad}" class="rn-grid"/>`);
+    }
+    for (let gy = 0; gy <= 3; gy++) {
+      const py = pad + gy * (H - pad * 2) / 3;
+      grid.push(`<line x1="${pad}" y1="${py}" x2="${W - pad}" y2="${py}" class="rn-grid"/>`);
+    }
+
+    const nodes = meters.map(m => {
+      const r = (4 + (m.risk_score || 0) / 100 * 7).toFixed(1);
+      const cls = RN_SEV_RING[m.severity] || 'normal';
+      return `<g class="rn-node" data-mid="${esc(m.meter_id)}" data-loc="${esc(m.location || '')}">
+        <circle cx="${x(m)}" cy="${y(m)}" r="${r + 5}" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+        <circle cx="${x(m)}" cy="${y(m)}" r="${r}" fill="#ffffff"/>
+        <circle cx="${x(m)}" cy="${y(m)}" r="${r + 5}" fill="none" class="rn-ring ${cls}" style="animation-delay:${(Math.random() * 2).toFixed(1)}s"/>
+        <text x="${x(m)}" y="${parseFloat(y(m)) - r - 8}" class="rn-label" text-anchor="middle">${esc(m.meter_id)}</text>
+      </g>`;
+    });
+
+    svg.innerHTML = grid.join('') + nodes.join('');
+    svg.querySelectorAll('.rn-node').forEach(g => {
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+      t.textContent = g.dataset.mid + ' · ' + g.dataset.loc;
+      g.appendChild(t);
+      g.addEventListener('click', () => {
+        window.location.href = '/map?locate=' + encodeURIComponent(g.dataset.mid);
+      });
+    });
+  } catch (err) { /* keep quiet */ }
+}
+
+/* ============================================================
+   LIVE TELEMETRY — per-meter usage vs baseline
+   ============================================================ */
+async function loadLiveTelemetry(shared) {
+  const body = document.getElementById('liveTelemetryBody');
+  if (!body) return;
+  let data = shared;
+  if (!data) {
+    try {
+      const res = await fetch('/api/meters/map', { headers: { 'X-Requested-With': 'fetch' } });
+      data = await res.json();
+    } catch (err) {
+      body.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-3">Live feed unavailable.</td></tr>`;
+      return;
+    }
+  }
+  try {
+    const meters = data.meters || [];
+    if (!meters.length) {
+      body.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-3">No meters synchronized yet — launch the demo or upload meter data.</td></tr>`;
+      return;
+    }
+    const sevPill = s => `<span class="pill-severity pill-${(s || 'Normal').toLowerCase()}">${esc(s || 'Normal')}</span>`;
+    const devCell = m => m.deviation_pct == null
+      ? '<span class="text-muted">—</span>'
+      : `<span class="${Math.abs(m.deviation_pct) >= 100 ? 'text-danger' : (Math.abs(m.deviation_pct) >= 50 ? 'text-warning' : 'text-secondary')}">${(m.deviation_pct >= 0 ? '+' : '') + m.deviation_pct.toFixed(1)}%</span>`;
+    body.innerHTML = meters.map(m => `
+      <tr>
+        <td><strong class="text-white">${esc(m.meter_id)}</strong></td>
+        <td><span class="text-secondary">${esc(m.location || 'Campus Facility')}</span><small class="d-block text-muted" style="font-size:10px;">${esc(m.building || '')}</small></td>
+        <td class="font-mono">${fmtLiters(m.current_usage || 0)}</td>
+        <td class="font-mono text-secondary">${fmtLiters(m.baseline || 0)}</td>
+        <td class="font-mono">${devCell(m)}</td>
+        <td>${sevPill(m.severity)}</td>
+        <td><span class="badge font-mono" style="font-size:10px;">${esc(m.anomaly_status || 'Nominal')}</span></td>
+        <td><a href="/map?locate=${encodeURIComponent(m.meter_id)}" class="btn btn-sm btn-holo py-1 px-2" style="font-size:11px;">Grid</a></td>
+      </tr>`).join('');
+  } catch (err) {
+    body.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-3">Live feed unavailable.</td></tr>`;
+  }
+}
+
+/* ============================================================
+   LIVE SIMULATION CONSOLE (telemetry engine widget)
+   ============================================================ */
+let simConsoleState = null;
+
+async function simControl(action, extra) {
+  try {
+    const res = await fetch('/api/telemetry/control', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ action }, extra || {}))
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+      renderSimConsole(data);
+      dispatchSimEvent(data);
+    } else if (data.message) {
+      showToast('Telemetry', data.message, 'danger');
+    }
+    return data;
+  } catch (err) {
+    return null;
+  }
+}
+
+function renderSimConsole(s) {
+  simConsoleState = s;
+  const label = document.getElementById('dashSimLabel');
+  const chip = document.getElementById('dashSimChip');
+  if (label) {
+    const active = s.running && !s.paused;
+    label.textContent = active
+      ? (s.mode === 'replay' ? 'DATA REPLAY' : 'SIM ACTIVE')
+      : (s.running ? 'PAUSED' : 'STANDBY');
+    const dot = chip ? chip.querySelector('.live-dot') : null;
+    if (dot) dot.className = 'live-dot ' + (active ? 'ok' : 'idle');
+  }
+  const num = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = Number(v || 0).toLocaleString(); };
+  num('dashStatRead', s.readings_generated);
+  num('dashStatAnom', s.anomalies_detected);
+  num('dashStatCrit', s.critical_count);
+  const se = document.getElementById('dashSelSpeed');
+  if (se && Number(se.value) !== Number(s.speed)) se.value = String(s.speed);
+  const sc = document.getElementById('dashSelScenario');
+  if (sc && sc.value !== s.scenario) sc.value = s.scenario;
+  const md = document.getElementById('dashSelMode');
+  if (md && md.value !== s.mode) md.value = s.mode;
+  const start = document.getElementById('dashBtnStart');
+  const pause = document.getElementById('dashBtnPause');
+  const active2 = s.running && !s.paused;
+  if (start) start.disabled = active2;
+  if (pause) pause.disabled = !s.running;
+}
+
+function dispatchSimEvent(s) {
+  window.dispatchEvent(new CustomEvent('aqua:telemetry', { detail: s }));
+}
+
+async function refreshSimConsole() {
+  try {
+    const res = await fetch('/api/telemetry/status');
+    const data = await res.json();
+    if (data && data.status === 'success') {
+      renderSimConsole(data);
+      dispatchSimEvent(data);
+    }
+  } catch (err) { /* keep previous state */ }
+}
+
+function wireSimConsole() {
+  document.getElementById('dashBtnStart')?.addEventListener('click', () => simControl('start', {
+    mode: document.getElementById('dashSelMode')?.value || 'scenario',
+    speed: parseInt(document.getElementById('dashSelSpeed')?.value || '5', 10),
+    scenario: document.getElementById('dashSelScenario')?.value || 'mixed_risks'
+  }));
+  const pause = document.getElementById('dashBtnPause');
+  pause?.addEventListener('click', () => {
+    if (simConsoleState && simConsoleState.running && simConsoleState.paused) simControl('resume');
+    else simControl('pause');
+  });
+  document.getElementById('dashBtnResync')?.addEventListener('click', () => {
+    simControl('start', {
+      mode: document.getElementById('dashSelMode')?.value || 'scenario',
+      speed: parseInt(document.getElementById('dashSelSpeed')?.value || '5', 10),
+      scenario: document.getElementById('dashSelScenario')?.value || 'mixed_risks'
+    });
+  });
+  document.getElementById('dashBtnReset')?.addEventListener('click', () => simControl('reset'));
+  document.getElementById('dashSelSpeed')?.addEventListener('change', () =>
+    simControl('speed', { speed: parseInt(document.getElementById('dashSelSpeed').value, 10) || 1 }));
+  document.getElementById('dashSelScenario')?.addEventListener('change', () =>
+    simControl('scenario', { scenario: document.getElementById('dashSelScenario').value }));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  wireSimConsole();
+  refreshSimConsole();
+  setInterval(refreshSimConsole, 6000);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Control Room Settings — AquaGuard AI{% endblock %}
+
+{% block content %}
+<div class="glass-panel p-4 mb-4" style="max-width: 840px;">
+  <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom border-secondary border-opacity-15">
+    <div>
+      <h3 class="h5 fw-bold text-white mb-1"><i class="bi bi-gear-fill text-info me-2"></i>Algorithm Thresholds & Control Room Parameters</h3>
+      <p class="text-secondary small mb-0">Tune sensitivity boundaries, nocturnal monitoring hours, and economic multipliers.</p>
+    </div>
+    <span class="badge bg-secondary font-mono">SQLite State Persistence</span>
+  </div>
+
+  <form method="POST" action="{{ url_for('main.settings') }}">
+    <h4 class="h6 fw-bold text-info mb-3 font-mono">1. STATISTICAL & ML DEVIATION BOUNDARIES</h4>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <label class="form-label text-secondary small fw-bold font-mono">Z-SCORE SENSITIVITY FENCE</label>
+        <div class="input-group">
+          <input type="number" step="0.1" name="z_threshold" class="form-control holo-input" value="{{ settings.get('z_threshold', '2.5') }}" required>
+          <span class="input-group-text bg-dark border-secondary text-secondary font-mono">σ dev</span>
+        </div>
+        <small class="text-muted">Standard deviations from rolling baseline mean to trigger anomaly.</small>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label text-secondary small fw-bold font-mono">PERCENTAGE DEPARTURE THRESHOLD</label>
+        <div class="input-group">
+          <input type="number" step="1.0" name="pct_threshold" class="form-control holo-input" value="{{ settings.get('pct_threshold', '50.0') }}" required>
+          <span class="input-group-text bg-dark border-secondary text-secondary font-mono">%</span>
+        </div>
+        <small class="text-muted">Direct volumetric percentage surge over baseline.</small>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label text-secondary small fw-bold font-mono">IQR MULTIPLIER (TUKEY FENCE)</label>
+        <div class="input-group">
+          <input type="number" step="0.1" name="iqr_multiplier" class="form-control holo-input" value="{{ settings.get('iqr_multiplier', '1.5') }}" required>
+          <span class="input-group-text bg-dark border-secondary text-secondary font-mono">× IQR</span>
+        </div>
+        <small class="text-muted">Non-parametric outlier multiplier.</small>
+      </div>
+    </div>
+
+    <h4 class="h6 fw-bold text-info mb-3 font-mono">2. NOCTURNAL QUIET SURVEILLANCE SCHEDULE</h4>
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <label class="form-label text-secondary small fw-bold font-mono">NIGHT MONITORING START</label>
+        <div class="input-group">
+          <input type="number" min="0" max="23" name="night_start" class="form-control holo-input" value="{{ settings.get('night_start', '22') }}" required>
+          <span class="input-group-text bg-dark border-secondary text-secondary font-mono">:00 UTC</span>
+        </div>
+        <small class="text-muted">Hour when quiet-hours baseline monitoring commences.</small>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label text-secondary small fw-bold font-mono">NIGHT MONITORING END</label>
+        <div class="input-group">
+          <input type="number" min="0" max="23" name="night_end" class="form-control holo-input" value="{{ settings.get('night_end', '6') }}" required>
+          <span class="input-group-text bg-dark border-secondary text-secondary font-mono">:00 UTC</span>
+        </div>
+        <small class="text-muted">Hour when normal facility daytime activity resumes.</small>
+      </div>
+    </div>
+
+    <h4 class="h6 fw-bold text-info mb-3 font-mono">3. ECONOMIC & CARBON MULTIPLIERS</h4>
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <label class="form-label text-secondary small fw-bold font-mono">UTILITY COST RATE</label>
+        <div class="input-group">
+          <span class="input-group-text bg-dark border-secondary text-secondary font-mono">$</span>
+          <input type="number" step="0.01" name="cost_per_kl" class="form-control holo-input" value="{{ settings.get('cost_per_kl', '2.50') }}" required>
+          <span class="input-group-text bg-dark border-secondary text-secondary font-mono">/ kL</span>
+        </div>
+        <small class="text-muted">Direct utility rate per 1,000 Liters.</small>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 pt-3 border-top border-secondary border-opacity-15">
+      <button type="submit" class="btn btn-holo px-4">
+        <i class="bi bi-save me-1"></i> Save Parameters
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
