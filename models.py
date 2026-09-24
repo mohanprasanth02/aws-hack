@@ -235,14 +235,20 @@ class WorkOrder(db.Model):
     anomaly_id = db.Column(db.Integer, db.ForeignKey('anomalies.id', ondelete='SET NULL'), nullable=True)
     meter_id = db.Column(db.String(50), nullable=False, index=True)
     location = db.Column(db.String(100), nullable=True)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
     title = db.Column(db.String(255), nullable=False)
     priority = db.Column(db.String(20), default='Medium')  # Low, Medium, High, Emergency
-    status = db.Column(db.String(30), default='Open', index=True)  # Open, Dispatched, In Progress, Resolved, Dismissed
+    status = db.Column(db.String(30), default='Open', index=True)  # Open, Dispatched, En Route, In Progress, Resolved, Dismissed
     asset_type = db.Column(db.String(50), default='Mains Pipeline')  # Mains Pipeline, Restroom Cistern, Cooling Tower, Irrigation Valve, Booster Pump
     assigned_technician = db.Column(db.String(100), default='Field Plumbing Team')
+    assigned_worker_email = db.Column(db.String(120), default='worker@aquaguard.io')
     estimated_leak_lph = db.Column(db.Float, default=0.0)
     actual_findings = db.Column(db.Text, nullable=True)
     action_taken = db.Column(db.Text, nullable=True)
+    completion_notes = db.Column(db.Text, nullable=True)
+    photo_filename = db.Column(db.String(255), nullable=True)
+    photo_url = db.Column(db.String(255), nullable=True)
     water_saved_liters = db.Column(db.Float, default=0.0)
     financial_savings_usd = db.Column(db.Float, default=0.0)
     co2_saved_kg = db.Column(db.Float, default=0.0)
@@ -256,14 +262,20 @@ class WorkOrder(db.Model):
             'anomaly_id': self.anomaly_id,
             'meter_id': self.meter_id,
             'location': self.location,
+            'latitude': self.latitude,
+            'longitude': self.longitude,
             'title': self.title,
             'priority': self.priority,
             'status': self.status,
             'asset_type': self.asset_type,
             'assigned_technician': self.assigned_technician,
+            'assigned_worker_email': self.assigned_worker_email or 'worker@aquaguard.io',
             'estimated_leak_lph': round(self.estimated_leak_lph or 0.0, 1),
             'actual_findings': self.actual_findings,
             'action_taken': self.action_taken,
+            'completion_notes': self.completion_notes,
+            'photo_filename': self.photo_filename,
+            'photo_url': self.photo_url,
             'water_saved_liters': round(self.water_saved_liters or 0.0, 1),
             'financial_savings_usd': round(self.financial_savings_usd or 0.0, 2),
             'co2_saved_kg': round(self.co2_saved_kg or 0.0, 2),

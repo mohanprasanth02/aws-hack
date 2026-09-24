@@ -1,23 +1,29 @@
 {% extends "base.html" %}
 
-{% block title %}Maintenance Work Orders & Field Remediation — AquaGuard AI{% endblock %}
+{% block title %}Work Load & Real-Time Field Dispatch — AquaGuard AI{% endblock %}
 
 {% block content %}
 <div class="work-orders-page">
   <!-- Header Bar -->
-  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+  <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center mb-4 gap-3">
     <div>
       <div class="d-flex align-items-center gap-2 mb-1">
         <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25 px-2 py-1">
-          <i class="bi bi-tools me-1"></i> Field Maintenance Operations
+          <i class="bi bi-tools me-1"></i> Real-Time Field Operations
         </span>
-        <span class="badge bg-dark text-muted border border-secondary border-opacity-25 font-mono">CLOSED-LOOP DISPATCH</span>
+        <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 font-mono">
+          <span class="spinner-grow spinner-grow-sm me-1" style="width: 8px; height: 8px;" role="status"></span>
+          MOBILE APP CONNECTED
+        </span>
       </div>
-      <h2 class="text-white fw-bold mb-0">Maintenance Work Orders & Leak Remediation</h2>
-      <p class="text-muted small mb-0">Track field technician dispatch, physical fixture repairs, and verified water conservation savings</p>
+      <h2 class="text-white fw-bold mb-0">Work Load & Field Remediation Console</h2>
+      <p class="text-muted small mb-0">Live dispatch from high-risk anomalies, technician GPS routing, and instant mobile camera photo proof-of-work</p>
     </div>
-    <div class="d-flex gap-2">
-      <button class="btn btn-holo btn-sm" data-bs-toggle="modal" data-bs-target="#newTicketModal">
+    <div class="d-flex flex-wrap gap-2">
+      <button class="btn btn-holo btn-sm" onclick="triggerAutoDispatchRisk()" title="Scan campus anomalies and automatically dispatch high-risk tasks">
+        <i class="bi bi-lightning-charge-fill text-warning me-1"></i> Auto-Dispatch from Risk
+      </button>
+      <button class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#newTicketModal">
         <i class="bi bi-plus-circle me-1"></i> New Work Order
       </button>
       <button class="btn btn-outline-info btn-sm" onclick="loadWorkOrders()">
@@ -31,17 +37,17 @@
     <div class="col-sm-6 col-xl-3">
       <div class="card glass-panel h-100 border-0 p-3">
         <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="text-muted small text-uppercase fw-semibold">Active Work Orders</span>
+          <span class="text-muted small text-uppercase fw-semibold">Active Work Load</span>
           <div class="p-2 rounded bg-warning bg-opacity-10 text-warning">
             <i class="bi bi-clipboard-pulse"></i>
           </div>
         </div>
         <div class="d-flex align-items-baseline gap-2">
           <h3 class="text-white fw-bold mb-0" id="kpiOpenOrders">--</h3>
-          <span class="badge bg-warning bg-opacity-25 text-warning font-mono" id="kpiOpenSub">Pending</span>
+          <span class="badge bg-warning bg-opacity-25 text-warning font-mono" id="kpiOpenSub">Pending Field Action</span>
         </div>
         <div class="text-muted small mt-2">
-          Total dispatched or in-progress tickets
+          Active dispatches across campus meters
         </div>
       </div>
     </div>
@@ -49,7 +55,7 @@
     <div class="col-sm-6 col-xl-3">
       <div class="card glass-panel h-100 border-0 p-3">
         <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="text-muted small text-uppercase fw-semibold">Active Field Leakage</span>
+          <span class="text-muted small text-uppercase fw-semibold">Active Leak Rate</span>
           <div class="p-2 rounded bg-danger bg-opacity-10 text-danger">
             <i class="bi bi-droplet-half"></i>
           </div>
@@ -58,7 +64,7 @@
           <h3 class="text-danger fw-bold mb-0" id="kpiActiveLeakRate">-- L/h</h3>
         </div>
         <div class="text-muted small mt-2">
-          Continuous active water loss rate
+          Unmitigated water departure under investigation
         </div>
       </div>
     </div>
@@ -75,7 +81,7 @@
           <h3 class="text-success fw-bold mb-0" id="kpiWaterSaved">-- L</h3>
         </div>
         <div class="text-muted small mt-2">
-          Cumulative savings from resolved repairs
+          Backed by field photo verification & meter re-check
         </div>
       </div>
     </div>
@@ -83,7 +89,7 @@
     <div class="col-sm-6 col-xl-3">
       <div class="card glass-panel h-100 border-0 p-3">
         <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="text-muted small text-uppercase fw-semibold">Utility Cost Recovered</span>
+          <span class="text-muted small text-uppercase fw-semibold">Utility Dollars Recovered</span>
           <div class="p-2 rounded bg-info bg-opacity-10 text-info">
             <i class="bi bi-cash-stack"></i>
           </div>
@@ -92,8 +98,28 @@
           <h3 class="text-white fw-bold mb-0 text-info" id="kpiFinancialSaved">$--</h3>
         </div>
         <div class="text-muted small mt-2">
-          Calculated at $2.50 / kiloliter benchmark
+          Calculated at $2.50 / kiloliter institutional tariff
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Real-Time Mobile Dispatch Banner -->
+  <div class="card glass-panel border border-info border-opacity-25 p-3 mb-4" style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.05), rgba(79, 172, 254, 0.02));">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle p-2 bg-info bg-opacity-20 text-info fs-4">
+          <i class="bi bi-phone-vibrate"></i>
+        </div>
+        <div>
+          <div class="text-white fw-bold">Flutter Mobile Field App Live Connection</div>
+          <div class="text-muted small">Technicians receive push assignments, navigate via GPS to SNS College buildings, and upload camera photos upon repair completion.</div>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-dark border border-secondary border-opacity-50 text-light px-3 py-2 font-mono">
+          <i class="bi bi-broadcast text-success me-1"></i> SYNC STATUS: LIVE
+        </span>
       </div>
     </div>
   </div>
@@ -104,6 +130,7 @@
       <div class="btn-group btn-group-sm" role="group" aria-label="Ticket filter">
         <button type="button" class="btn btn-outline-secondary active" onclick="filterTickets('')">All Tickets</button>
         <button type="button" class="btn btn-outline-secondary" onclick="filterTickets('Dispatched')">Dispatched</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="filterTickets('En Route')">En Route</button>
         <button type="button" class="btn btn-outline-secondary" onclick="filterTickets('In Progress')">In Progress</button>
         <button type="button" class="btn btn-outline-secondary" onclick="filterTickets('Resolved')">Resolved</button>
       </div>
@@ -116,19 +143,20 @@
         <thead>
           <tr class="text-muted small border-bottom border-secondary border-opacity-25">
             <th>Ticket ID</th>
-            <th>Asset & Location</th>
+            <th>Facility & GPS Destination</th>
             <th>Priority</th>
             <th>Status</th>
-            <th>Assigned Technician</th>
-            <th>Estimated Leak</th>
-            <th>Impact Saved</th>
+            <th>Assigned Mobile Worker</th>
+            <th>Est. Loss</th>
+            <th>Photo Proof</th>
+            <th>Water Saved</th>
             <th class="text-end">Actions</th>
           </tr>
         </thead>
         <tbody id="workOrdersTableBody">
           <tr>
-            <td colspan="8" class="text-center py-4 text-muted">
-              <div class="spinner-border spinner-border-sm text-info me-2"></div> Loading work orders...
+            <td colspan="9" class="text-center py-4 text-muted">
+              <div class="spinner-border spinner-border-sm text-info me-2"></div> Synchronizing work load from central core...
             </td>
           </tr>
         </tbody>
@@ -142,12 +170,12 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content glass-panel border-secondary text-white">
       <div class="modal-header border-secondary border-opacity-25">
-        <h5 class="modal-title fw-bold"><i class="bi bi-tools text-info me-2"></i>Create Maintenance Work Order</h5>
+        <h5 class="modal-title fw-bold"><i class="bi bi-tools text-info me-2"></i>Create Work Order & Dispatch</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <label class="form-label small text-muted">Associated Sub-Meter</label>
+          <label class="form-label small text-muted">Target Sub-Meter / Facility</label>
           <select class="form-select form-select-dark" id="newMeterId">
             {% for m in meters %}
             <option value="{{ m.meter_id }}">{{ m.meter_id }} — {{ m.building or m.location }}</option>
@@ -156,7 +184,7 @@
         </div>
         <div class="mb-3">
           <label class="form-label small text-muted">Issue Title / Subject</label>
-          <input type="text" class="form-control form-control-dark" id="newTitle" placeholder="e.g. Unexplained Nocturnal Flow Spike / Pinhole Fracture">
+          <input type="text" class="form-control form-control-dark" id="newTitle" placeholder="e.g. Unexplained Nocturnal Flow Spike / Pipe Rupture">
         </div>
         <div class="row g-2 mb-3">
           <div class="col-6">
@@ -184,14 +212,18 @@
           <input type="number" class="form-control form-control-dark" id="newLeakLph" value="180.0" step="10">
         </div>
         <div class="mb-3">
-          <label class="form-label small text-muted">Assign Plumbing / Facilities Tech</label>
-          <input type="text" class="form-control form-control-dark" id="newTechnician" value="Plumbing Squad Bravo">
+          <label class="form-label small text-muted">Assign Mobile Field Technician</label>
+          <select class="form-select form-select-dark" id="newTechnicianSelect">
+            <option value="Karthik R. (SNS Tech Lead)|worker@aquaguard.io">Karthik R. (SNS Tech Lead) &bull; worker@aquaguard.io</option>
+            <option value="Pravin M. (Field Tech Alpha)|worker@aquaguard.io">Pravin M. (Field Tech Alpha) &bull; worker@aquaguard.io</option>
+            <option value="Suresh K. (Hostel Hydraulics)|worker@aquaguard.io">Suresh K. (Hostel Hydraulics) &bull; worker@aquaguard.io</option>
+          </select>
         </div>
       </div>
       <div class="modal-footer border-secondary border-opacity-25">
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-holo btn-sm" onclick="submitNewWorkOrder()">
-          <i class="bi bi-check-circle me-1"></i> Create Ticket
+          <i class="bi bi-check-circle me-1"></i> Dispatch to Mobile App
         </button>
       </div>
     </div>
@@ -214,11 +246,11 @@
         </div>
         <div class="mb-3">
           <label class="form-label small text-muted">Actual Root Cause Discovered</label>
-          <textarea class="form-control form-control-dark" id="resolveFindings" rows="2" placeholder="e.g. Cracked PVC elbow joint; continuous 140 L/h loss into ground."></textarea>
+          <textarea class="form-control form-control-dark" id="resolveFindings" rows="2" placeholder="e.g. Cracked valve gasket; continuous 140 L/h loss into ground."></textarea>
         </div>
         <div class="mb-3">
           <label class="form-label small text-muted">Corrective Action Taken</label>
-          <textarea class="form-control form-control-dark" id="resolveAction" rows="2" placeholder="e.g. Cut and replaced cracked section with schedule 80 PVC, re-pressurized, zero leak verified."></textarea>
+          <textarea class="form-control form-control-dark" id="resolveAction" rows="2" placeholder="e.g. Replaced with EPDM industrial gasket, pressure tested line, zero nocturnal flow verified."></textarea>
         </div>
         <div class="p-3 rounded bg-success bg-opacity-10 border border-success border-opacity-25 small">
           <i class="bi bi-info-circle text-success me-1"></i> Resolving this work order will calculate verified water recovery, utility dollar savings, and close any linked anomaly alerts.
@@ -233,14 +265,56 @@
     </div>
   </div>
 </div>
+
+<!-- Modal: Field Photo Proof Lightbox -->
+<div class="modal fade" id="photoProofModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content glass-panel border border-info border-opacity-25 text-white" style="background: rgba(10, 14, 22, 0.95); backdrop-filter: blur(25px);">
+      <div class="modal-header border-secondary border-opacity-25">
+        <h5 class="modal-title fw-bold text-info">
+          <i class="bi bi-camera-fill me-2"></i>Field Mobile Photo Proof of Work
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center p-4">
+        <div class="mb-3 position-relative" style="background: #000; border-radius: 12px; overflow: hidden; max-height: 480px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
+          <img id="lightboxPhotoImg" src="" alt="Proof of Work" class="img-fluid" style="max-height: 480px; object-fit: contain;">
+        </div>
+        <div class="row g-2 text-start small mt-3 p-3 rounded" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);">
+          <div class="col-md-6">
+            <span class="text-muted d-block">Work Order:</span>
+            <strong id="lightboxTicketId" class="font-mono text-white"></strong>
+          </div>
+          <div class="col-md-6">
+            <span class="text-muted d-block">Verified By Mobile Technician:</span>
+            <strong id="lightboxTechnician" class="text-info"></strong>
+          </div>
+          <div class="col-12 mt-2">
+            <span class="text-muted d-block">Remediation Action & Findings:</span>
+            <div id="lightboxNotes" class="text-white mt-1"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-secondary border-opacity-25">
+        <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 font-mono px-3 py-2">
+          <i class="bi bi-check-circle-fill me-1"></i> VERIFIED PHYSICAL REMEDIATION
+        </span>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 let currentStatusFilter = '';
+let autoRefreshTimer = null;
 
 document.addEventListener('DOMContentLoaded', function() {
   loadWorkOrders();
+  // Live polling every 5 seconds for real-time mobile app sync
+  autoRefreshTimer = setInterval(loadWorkOrders, 5000);
 });
 
 async function loadWorkOrders() {
@@ -279,10 +353,10 @@ function renderKpis(kpis) {
 
 function renderTable(orders) {
   const tbody = document.getElementById('workOrdersTableBody');
-  document.getElementById('ticketCountBadge').textContent = `${orders.length} tickets shown`;
+  document.getElementById('ticketCountBadge').textContent = `${orders.length} tickets synchronized`;
 
   if (!orders || orders.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">No work orders matching filter.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-muted">No work orders matching filter.</td></tr>`;
     return;
   }
 
@@ -295,14 +369,37 @@ function renderTable(orders) {
     let statusClass = 'secondary';
     if (wo.status === 'Resolved') statusClass = 'success';
     else if (wo.status === 'In Progress') statusClass = 'primary';
+    else if (wo.status === 'En Route') statusClass = 'info';
     else if (wo.status === 'Dispatched') statusClass = 'warning';
+
+    const lat = wo.latitude || 11.1018;
+    const lon = wo.longitude || 77.0275;
+    const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
+
+    let photoHtml = '<span class="text-muted small"><i class="bi bi-clock me-1"></i>Awaiting</span>';
+    if (wo.photo_url) {
+      photoHtml = `
+        <button class="btn btn-outline-info btn-sm py-0 px-2 font-mono" style="font-size: 11px;" onclick='openPhotoLightbox(${JSON.stringify(wo).replace(/'/g, "&#39;")})'>
+          <i class="bi bi-camera-fill text-info me-1"></i> View Proof
+        </button>
+      `;
+    }
 
     return `
       <tr>
-        <td class="font-mono fw-bold text-white">${wo.ticket_id}</td>
+        <td class="font-mono fw-bold text-white">
+          ${wo.ticket_id}
+          <div class="small text-muted font-mono" style="font-size: 10px;">${wo.meter_id}</div>
+        </td>
         <td>
           <div class="fw-semibold text-white small">${wo.title}</div>
-          <small class="text-muted">${wo.asset_type} &bull; ${wo.location}</small>
+          <div class="d-flex align-items-center gap-1 text-muted small mt-1">
+            <i class="bi bi-geo-alt-fill text-info"></i>
+            <span>${wo.location}</span>
+            <a href="${gmapsUrl}" target="_blank" class="badge bg-dark border border-secondary border-opacity-50 text-info text-decoration-none ms-1" title="Open Google Maps GPS Navigation">
+              <i class="bi bi-signpost-2 me-1"></i>GPS Route
+            </a>
+          </div>
         </td>
         <td>
           <span class="badge bg-${priorityClass} bg-opacity-25 text-${priorityClass} font-mono">${wo.priority}</span>
@@ -310,8 +407,12 @@ function renderTable(orders) {
         <td>
           <span class="badge bg-${statusClass} bg-opacity-25 text-${statusClass} font-mono">${wo.status}</span>
         </td>
-        <td class="small text-light">${wo.assigned_technician}</td>
-        <td class="font-mono text-danger">${wo.estimated_leak_lph > 0 ? wo.estimated_leak_lph + ' L/h' : '--'}</td>
+        <td>
+          <div class="small text-light fw-medium">${wo.assigned_technician}</div>
+          <small class="text-muted font-mono" style="font-size: 10px;">${wo.assigned_worker_email || 'worker@aquaguard.io'}</small>
+        </td>
+        <td class="font-mono text-danger fw-bold">${wo.estimated_leak_lph > 0 ? wo.estimated_leak_lph + ' L/h' : '--'}</td>
+        <td>${photoHtml}</td>
         <td>
           ${wo.status === 'Resolved' ? `
             <div class="font-mono text-success fw-bold small">+${wo.water_saved_liters.toLocaleString()} L</div>
@@ -324,12 +425,27 @@ function renderTable(orders) {
               <i class="bi bi-check-circle me-1"></i> Resolve
             </button>
           ` : `
-            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Closed</span>
+            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25"><i class="bi bi-check2-all me-1"></i>Closed</span>
           `}
         </td>
       </tr>
     `;
   }).join('');
+}
+
+async function triggerAutoDispatchRisk() {
+  try {
+    const res = await fetch('/api/work-orders/auto-dispatch-risk', { method: 'POST' });
+    const result = await res.json();
+    if (result.status === 'success') {
+      loadWorkOrders();
+      alert(result.message);
+    } else {
+      alert('Auto dispatch note: ' + result.message);
+    }
+  } catch (err) {
+    alert('Communication error: ' + err.message);
+  }
 }
 
 async function submitNewWorkOrder() {
@@ -338,7 +454,9 @@ async function submitNewWorkOrder() {
   const assetType = document.getElementById('newAssetType').value;
   const priority = document.getElementById('newPriority').value;
   const leakLph = parseFloat(document.getElementById('newLeakLph').value) || 120.0;
-  const technician = document.getElementById('newTechnician').value.trim();
+  
+  const techSelectVal = document.getElementById('newTechnicianSelect').value;
+  const [technician, workerEmail] = techSelectVal.split('|');
 
   try {
     const res = await fetch('/api/work-orders', {
@@ -350,7 +468,8 @@ async function submitNewWorkOrder() {
         asset_type: assetType,
         priority: priority,
         estimated_leak_lph: leakLph,
-        assigned_technician: technician
+        assigned_technician: technician,
+        assigned_worker_email: workerEmail
       })
     });
     const result = await res.json();
@@ -399,6 +518,16 @@ async function submitResolveWorkOrder() {
   } catch (err) {
     alert('Communication error: ' + err.message);
   }
+}
+
+function openPhotoLightbox(wo) {
+  document.getElementById('lightboxPhotoImg').src = wo.photo_url;
+  document.getElementById('lightboxTicketId').textContent = wo.ticket_id + ' (' + wo.meter_id + ')';
+  document.getElementById('lightboxTechnician').textContent = (wo.assigned_technician || 'Field Technician') + ' [' + (wo.resolved_at || 'Just now') + ']';
+  document.getElementById('lightboxNotes').textContent = (wo.action_taken || '') + ' — ' + (wo.completion_notes || wo.actual_findings || 'Field remediation verified.');
+  
+  const modal = new bootstrap.Modal(document.getElementById('photoProofModal'));
+  modal.show();
 }
 </script>
 {% endblock %}

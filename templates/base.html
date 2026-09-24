@@ -46,9 +46,8 @@
       <!-- Center pill navigation -->
       <nav class="aq-pillnav" aria-label="Primary">
         <a href="{{ url_for('main.dashboard') }}" class="aq-pillnav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}">Dashboard</a>
-        <a href="{{ url_for('main.water_intelligence') }}" class="aq-pillnav-link {% if request.endpoint == 'main.water_intelligence' %}active{% endif %}"><i class="bi bi-droplet-half me-1"></i>Water Intel</a>
-        <a href="{{ url_for('main.work_orders') }}" class="aq-pillnav-link {% if request.endpoint == 'main.work_orders' %}active{% endif %}"><i class="bi bi-tools me-1"></i>Work Orders</a>
         <a href="{{ url_for('main.telemetry') }}" class="aq-pillnav-link {% if request.endpoint == 'main.telemetry' %}active{% endif %}">Telemetry</a>
+        <a href="{{ url_for('main.work_orders') }}" class="aq-pillnav-link {% if request.endpoint == 'main.work_orders' %}active{% endif %}"><i class="bi bi-tools me-1"></i>Work Load</a>
         <a href="{{ url_for('main.anomalies') }}" class="aq-pillnav-link {% if request.endpoint in ['main.anomalies', 'main.anomaly_detail'] %}active{% endif %}">Anomalies</a>
         <a href="{{ url_for('main.map_view') }}" class="aq-pillnav-link {% if request.endpoint == 'main.map_view' %}active{% endif %}">Map</a>
         <a href="{{ url_for('main.forecast') }}" class="aq-pillnav-link {% if request.endpoint == 'main.forecast' %}active{% endif %}">Forecast</a>
@@ -92,8 +91,7 @@
               <div class="text-white fw-bold small">{{ current_user.name if current_user.is_authenticated else 'Water Operator' }}</div>
               <small class="text-info font-mono" style="font-size: 10.5px;">AquaGuard Intelligence Console</small>
             </li>
-            <li><a class="dropdown-item py-2 text-light aq-drop-item" href="{{ url_for('main.water_intelligence') }}"><i class="bi bi-droplet-half me-2 text-info"></i>Water Intelligence (MNF/DMA)</a></li>
-            <li><a class="dropdown-item py-2 text-light aq-drop-item" href="{{ url_for('main.work_orders') }}"><i class="bi bi-tools me-2 text-info"></i>Maintenance Work Orders</a></li>
+            <li><a class="dropdown-item py-2 text-light aq-drop-item" href="{{ url_for('main.work_orders') }}"><i class="bi bi-tools me-2 text-info"></i>Work Load & Dispatch</a></li>
             <li><a class="dropdown-item py-2 text-light aq-drop-item" href="{{ url_for('main.settings') }}"><i class="bi bi-sliders me-2 text-info"></i>System Settings</a></li>
             <li><a class="dropdown-item py-2 text-light aq-drop-item" href="{{ url_for('main.meters') }}"><i class="bi bi-diagram-3 me-2 text-info"></i>Sub-Meter Registry</a></li>
             <li><a class="dropdown-item py-2 text-light aq-drop-item" href="{{ url_for('main.upload') }}"><i class="bi bi-cloud-arrow-up me-2 text-info"></i>Upload Water Data</a></li>
@@ -114,9 +112,8 @@
   <!-- Mobile slide-down full nav -->
   <div class="aq-sheet" id="aqMobileSheet">
     <a href="{{ url_for('main.dashboard') }}" class="{% if request.endpoint == 'main.dashboard' %}active{% endif %}"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
-    <a href="{{ url_for('main.water_intelligence') }}" class="{% if request.endpoint == 'main.water_intelligence' %}active{% endif %}"><i class="bi bi-droplet-half me-2"></i> Water Intelligence (MNF/DMA)</a>
-    <a href="{{ url_for('main.work_orders') }}" class="{% if request.endpoint == 'main.work_orders' %}active{% endif %}"><i class="bi bi-tools me-2"></i> Maintenance Work Orders</a>
     <a href="{{ url_for('main.telemetry') }}" class="{% if request.endpoint == 'main.telemetry' %}active{% endif %}"><i class="bi bi-activity me-2"></i> Live Telemetry</a>
+    <a href="{{ url_for('main.work_orders') }}" class="{% if request.endpoint == 'main.work_orders' %}active{% endif %}"><i class="bi bi-tools me-2"></i> Work Load & Field Dispatch</a>
     <a href="{{ url_for('main.upload') }}" class="{% if request.endpoint == 'main.upload' %}active{% endif %}"><i class="bi bi-cloud-arrow-up me-2"></i> Upload Telemetry</a>
     <a href="{{ url_for('main.data_preview') }}" class="{% if request.endpoint in ['main.data_preview', 'main.evaluation'] %}active{% endif %}"><i class="bi bi-terminal me-2"></i> Analytics</a>
     <a href="{{ url_for('main.anomalies') }}" class="{% if request.endpoint in ['main.anomalies', 'main.anomaly_detail'] %}active{% endif %}"><i class="bi bi-exclamation-triangle me-2"></i> Anomalies</a>
@@ -155,6 +152,7 @@
   <nav class="mobile-dock" aria-label="Mobile quick nav">
     <a href="{{ url_for('main.dashboard') }}" class="{% if request.endpoint == 'main.dashboard' %}active{% endif %}" title="Dashboard"><i class="bi bi-house-fill"></i></a>
     <a href="{{ url_for('main.telemetry') }}" class="{% if request.endpoint == 'main.telemetry' %}active{% endif %}" title="Telemetry"><i class="bi bi-activity"></i></a>
+    <a href="{{ url_for('main.work_orders') }}" class="{% if request.endpoint == 'main.work_orders' %}active{% endif %}" title="Work Load"><i class="bi bi-tools"></i></a>
     <a href="{{ url_for('main.map_view') }}" class="{% if request.endpoint == 'main.map_view' %}active{% endif %}" title="Water Map"><i class="bi bi-geo-alt-fill"></i></a>
     <a href="{{ url_for('main.anomalies') }}" class="{% if request.endpoint in ['main.anomalies', 'main.anomaly_detail'] %}active{% endif %}" title="Anomalies"><i class="bi bi-exclamation-triangle-fill"></i></a>
     <button type="button" class="dock-more" onclick="toggleMobileSheet()" title="More"><i class="bi bi-grid-3x3-gap-fill"></i></button>
