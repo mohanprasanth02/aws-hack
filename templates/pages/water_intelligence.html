@@ -1,0 +1,675 @@
+{% extends "base.html" %}
+
+{% block title %}Water Intelligence & Hydraulic Engineering — AquaGuard AI{% endblock %}
+
+{% block content %}
+<div class="water-intel-page">
+  <!-- Header Bar -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <span class="badge bg-primary bg-opacity-25 text-info border border-info border-opacity-25 px-2 py-1">
+          <i class="bi bi-droplet-half me-1"></i> IWA Civil & Hydraulic Standard
+        </span>
+        <span class="badge bg-dark text-muted border border-secondary border-opacity-25 font-mono" id="lastUpdatedBadge">LIVE TELEMETRY</span>
+      </div>
+      <h2 class="text-white fw-bold mb-0">Water Engineering & Nocturnal Intelligence</h2>
+      <p class="text-muted small mb-0">Minimum Night Flow (MNF), DMA Water Balance, and Asset Diagnostics (02:00–04:00 Quiet Window)</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-info btn-sm" onclick="loadWaterIntelligence()" id="refreshBtn">
+        <i class="bi bi-arrow-repeat me-1"></i> Recalculate
+      </button>
+      <a href="{{ url_for('main.work_orders') }}" class="btn btn-holo btn-sm">
+        <i class="bi bi-tools me-1"></i> Maintenance Work Orders
+      </a>
+    </div>
+  </div>
+
+  <!-- Primary Hydraulic KPI Cards -->
+  <div class="row g-3 mb-4">
+    <!-- MNF Rate -->
+    <div class="col-sm-6 col-xl-3">
+      <div class="card glass-panel h-100 border-0 p-3">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span class="text-muted small text-uppercase fw-semibold">Minimum Night Flow (MNF)</span>
+          <div class="p-2 rounded bg-info bg-opacity-10 text-info">
+            <i class="bi bi-moon-stars-fill"></i>
+          </div>
+        </div>
+        <div class="d-flex align-items-baseline gap-2">
+          <h3 class="text-white fw-bold mb-0" id="kpiMnfRate">-- L/h</h3>
+          <span class="badge bg-danger bg-opacity-25 text-danger font-mono" id="kpiMnfDrift">--%</span>
+        </div>
+        <div class="text-muted small mt-2" id="kpiMnfSub">
+          Quiet hours (02:00–04:00 AM) baseline flow
+        </div>
+      </div>
+    </div>
+
+    <!-- Background Leakage -->
+    <div class="col-sm-6 col-xl-3">
+      <div class="card glass-panel h-100 border-0 p-3">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span class="text-muted small text-uppercase fw-semibold">Net Background Leakage</span>
+          <div class="p-2 rounded bg-danger bg-opacity-10 text-danger">
+            <i class="bi bi-water"></i>
+          </div>
+        </div>
+        <div class="d-flex align-items-baseline gap-2">
+          <h3 class="text-white fw-bold mb-0 text-danger" id="kpiLeakageFlow">-- L/h</h3>
+          <small class="text-muted font-mono">above LNC</small>
+        </div>
+        <div class="text-muted small mt-2">
+          Unavoidable Nocturnal Demand: <span class="text-white fw-semibold" id="kpiLncRate">-- L/h</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Non-Revenue Water -->
+    <div class="col-sm-6 col-xl-3">
+      <div class="card glass-panel h-100 border-0 p-3">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span class="text-muted small text-uppercase fw-semibold">Non-Revenue Water (NRW)</span>
+          <div class="p-2 rounded bg-warning bg-opacity-10 text-warning">
+            <i class="bi bi-pie-chart-fill"></i>
+          </div>
+        </div>
+        <div class="d-flex align-items-baseline gap-2">
+          <h3 class="text-white fw-bold mb-0 text-warning" id="kpiNrwPct">--%</h3>
+          <span class="badge bg-warning bg-opacity-25 text-warning font-mono" id="kpiNrwCost">$--/mo</span>
+        </div>
+        <div class="text-muted small mt-2">
+          Total Water Losses: <span class="text-white fw-semibold" id="kpiLossVolume">-- L</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Night-to-Day Ratio & ILI -->
+    <div class="col-sm-6 col-xl-3">
+      <div class="card glass-panel h-100 border-0 p-3">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span class="text-muted small text-uppercase fw-semibold">Night-to-Day Ratio (NDR)</span>
+          <div class="p-2 rounded bg-success bg-opacity-10 text-success">
+            <i class="bi bi-speedometer"></i>
+          </div>
+        </div>
+        <div class="d-flex align-items-baseline gap-2">
+          <h3 class="text-white fw-bold mb-0" id="kpiNdr">--</h3>
+          <span class="badge bg-success bg-opacity-25 text-success font-mono" id="kpiNdrStatus">Optimal</span>
+        </div>
+        <div class="text-muted small mt-2">
+          ILI Benchmark: <span class="text-info fw-semibold" id="kpiIliScore">--</span> (<span id="kpiIliRating">--</span>)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diurnal Flow Curve & 14-Day MNF Trend -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-8">
+      <div class="card glass-panel border-0 p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h5 class="text-white fw-bold mb-0">24-Hour Diurnal Demand Profile</h5>
+            <small class="text-muted">Average hourly consumption across all meters with highlighted 02:00–04:00 AM quiet nocturnal envelope</small>
+          </div>
+          <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-2 py-1 font-mono">
+            02:00 - 04:00 Quiet Window
+          </span>
+        </div>
+        <div style="height: 320px; position: relative;">
+          <canvas id="diurnalChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card glass-panel border-0 p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h5 class="text-white fw-bold mb-0">14-Day MNF Trend</h5>
+            <small class="text-muted">Detects creeping background leaks</small>
+          </div>
+          <span class="badge bg-secondary bg-opacity-25 text-light font-mono" id="trendDriftBadge">--</span>
+        </div>
+        <div style="height: 250px; position: relative;">
+          <canvas id="mnfTrendChart"></canvas>
+        </div>
+        <div class="p-2 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-25 mt-2">
+          <div class="d-flex align-items-center gap-2 small">
+            <i class="bi bi-info-circle text-info"></i>
+            <span class="text-muted" id="trendInsightText">A steady rise in minimum night flow indicates an expanding subsurface fissure or stuck fixture.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IWA Water Balance Breakdown & Asset Diagnostics -->
+  <div class="row g-4 mb-4">
+    <!-- IWA Balance -->
+    <div class="col-lg-6">
+      <div class="card glass-panel border-0 p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h5 class="text-white fw-bold mb-0">IWA District Water Balance</h5>
+            <small class="text-muted">System Input Volume (SIV) vs. Authorized & Lost Volume</small>
+          </div>
+          <span class="badge bg-primary bg-opacity-25 text-info font-mono">IWA Standard</span>
+        </div>
+        
+        <div class="water-balance-bars mb-3">
+          <div class="d-flex justify-content-between small text-muted mb-1">
+            <span>System Input Volume</span>
+            <span class="text-white fw-bold font-mono" id="wbSiv">-- L</span>
+          </div>
+          <div class="progress mb-3" style="height: 12px; background: rgba(255,255,255,0.06); border-radius: 6px;">
+            <div class="progress-bar bg-info" style="width: 100%" role="progressbar"></div>
+          </div>
+
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <div class="p-2 rounded bg-success bg-opacity-10 border border-success border-opacity-25">
+                <small class="text-success text-uppercase d-block fw-semibold" style="font-size: 11px;">Billed Authorized</small>
+                <span class="text-white fw-bold font-mono" id="wbBilled">-- L</span>
+                <small class="text-muted d-block" id="wbBilledPct">--% of input</small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25">
+                <small class="text-warning text-uppercase d-block fw-semibold" style="font-size: 11px;">Unbilled Authorized</small>
+                <span class="text-white fw-bold font-mono" id="wbUnbilled">-- L</span>
+                <small class="text-muted d-block">Fire & grounds</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-2">
+            <div class="col-6">
+              <div class="p-2 rounded bg-danger bg-opacity-10 border border-danger border-opacity-25">
+                <small class="text-danger text-uppercase d-block fw-semibold" style="font-size: 11px;">Real Physical Losses</small>
+                <span class="text-white fw-bold font-mono" id="wbReal">-- L</span>
+                <small class="text-muted d-block">Bursts & underground leaks</small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 rounded bg-secondary bg-opacity-25 border border-secondary border-opacity-25">
+                <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 11px;">Apparent Losses</small>
+                <span class="text-white fw-bold font-mono" id="wbApparent">-- L</span>
+                <small class="text-muted d-block">Meter under-registration</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="height: 180px; position: relative;">
+          <canvas id="waterBalanceDonut"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Asset Diagnostics -->
+    <div class="col-lg-6">
+      <div class="card glass-panel border-0 p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h5 class="text-white fw-bold mb-0">Specialized Water Asset Diagnostics</h5>
+            <small class="text-muted">Cooling towers, irrigation weather locks, and restroom fixture groups</small>
+          </div>
+        </div>
+
+        <div class="d-flex flex-column gap-3">
+          <!-- Cooling Towers -->
+          <div class="p-3 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-25">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-building text-info"></i>
+                <span class="text-white fw-bold small">Evaporative Cooling Towers (HVAC)</span>
+              </div>
+              <span class="badge bg-success bg-opacity-25 text-success font-mono" id="towerStatus">Optimal Cycling</span>
+            </div>
+            <div class="row g-2 text-muted small mb-2">
+              <div class="col-4">Cycles of Conc: <span class="text-white fw-semibold font-mono" id="towerCoc">4.6</span> / 5.0</div>
+              <div class="col-4">Makeup: <span class="text-white fw-semibold font-mono" id="towerMakeup">142.5 m³/d</span></div>
+              <div class="col-4">Blowdown: <span class="text-white fw-semibold font-mono" id="towerBlowdown">31.1 m³/d</span></div>
+            </div>
+            <p class="text-muted small mb-0" id="towerRec" style="font-size: 12px;"></p>
+          </div>
+
+          <!-- Smart Irrigation -->
+          <div class="p-3 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-25">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-cloud-rain-fill text-primary"></i>
+                <span class="text-white fw-bold small">Smart Irrigation & Weather Compensation</span>
+              </div>
+              <span class="badge bg-info bg-opacity-25 text-info font-mono" id="irrigStatus">Eco-Suppressed</span>
+            </div>
+            <div class="row g-2 text-muted small mb-2">
+              <div class="col-6">Soil Moisture: <span class="text-white fw-semibold font-mono" id="irrigMoisture">68%</span></div>
+              <div class="col-6">Saved via Rain Lock: <span class="text-success fw-semibold font-mono" id="irrigSaved">34,500 L</span></div>
+            </div>
+            <p class="text-muted small mb-0" id="irrigRec" style="font-size: 12px;"></p>
+          </div>
+
+          <!-- Restroom Fixtures -->
+          <div class="p-3 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-25">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-water text-warning"></i>
+                <span class="text-white fw-bold small">Restroom Fixtures & Cisterns</span>
+              </div>
+              <span class="badge bg-danger bg-opacity-25 text-danger font-mono" id="restroomTrickles">3 Active Leaks</span>
+            </div>
+            <div class="row g-2 text-muted small mb-2">
+              <div class="col-6">Flush Surges (24h): <span class="text-white fw-semibold font-mono" id="restroomSurges">1,420</span></div>
+              <div class="col-6">Trickle Loss Rate: <span class="text-danger fw-semibold font-mono" id="restroomLossRate">420 L/h</span></div>
+            </div>
+            <p class="text-muted small mb-0" id="restroomRec" style="font-size: 12px;"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alliance for Water Stewardship (AWS) Standard & LEED Certification -->
+  <div class="row g-4 mb-4">
+    <div class="col-12">
+      <div class="card glass-panel border-0 p-3">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-2">
+          <div>
+            <h5 class="text-white fw-bold mb-0">Global Water Stewardship & ESG Compliance</h5>
+            <small class="text-muted">Standardized scoring aligned with the Alliance for Water Stewardship (AWS) Standard & LEED v4.1 WE</small>
+          </div>
+          <div class="d-flex gap-2">
+            <span class="badge bg-warning bg-opacity-25 text-warning px-3 py-2 fs-6 font-mono border border-warning border-opacity-50" id="awsBadge">
+              <i class="bi bi-award-fill me-1"></i> AWS Gold Certified (87.2/100)
+            </span>
+            <span class="badge bg-success bg-opacity-25 text-success px-3 py-2 fs-6 font-mono border border-success border-opacity-50" id="leedBadge">
+              <i class="bi bi-patch-check-fill me-1"></i> LEED WE: 8 / 12 Points
+            </span>
+          </div>
+        </div>
+
+        <div class="row g-3" id="awsOutcomesRow">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Per-Meter Minimum Night Flow Rankings & Dispatch Action -->
+  <div class="row g-4 mb-4">
+    <div class="col-12">
+      <div class="card glass-panel border-0 p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h5 class="text-white fw-bold mb-0">Sub-Meter Nocturnal Vulnerability Ranking</h5>
+            <small class="text-muted">Ranked by estimated background nocturnal leakage rate during 02:00–04:00 quiet hours</small>
+          </div>
+          <span class="badge bg-dark text-muted border border-secondary border-opacity-25">Sorted by Leak Severity</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+            <thead>
+              <tr class="text-muted small border-bottom border-secondary border-opacity-25">
+                <th>Meter ID</th>
+                <th>Night Flow (02:00–04:00)</th>
+                <th>Peak Daytime Flow</th>
+                <th>Night-to-Day Ratio (NDR)</th>
+                <th>Est. Leak Loss Rate</th>
+                <th>Hydraulic Classification</th>
+                <th class="text-end">Maintenance Action</th>
+              </tr>
+            </thead>
+            <tbody id="mnfMetersTableBody">
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted">
+                  <div class="spinner-border spinner-border-sm text-info me-2"></div> Computing hydraulic baselines...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Dispatch Modal -->
+<div class="modal fade" id="quickDispatchModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-panel border-secondary text-white">
+      <div class="modal-header border-secondary border-opacity-25">
+        <h5 class="modal-title fw-bold"><i class="bi bi-tools text-info me-2"></i>Dispatch Field Remediation</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="modalMeterId">
+        <input type="hidden" id="modalLeakLph">
+        
+        <div class="mb-3">
+          <label class="form-label small text-muted">Target Meter & Infrastructure</label>
+          <input type="text" class="form-control form-control-dark" id="modalMeterDisplay" readonly>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small text-muted">Estimated Leakage Volume</label>
+          <div class="input-group">
+            <input type="text" class="form-control form-control-dark" id="modalLeakDisplay" readonly>
+            <span class="input-group-text bg-dark border-secondary text-muted">L/hour</span>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small text-muted">Asset Type</label>
+          <select class="form-select form-select-dark" id="modalAssetType">
+            <option value="Mains Pipeline">Mains Pipeline / Pressure Zone</option>
+            <option value="Restroom Cistern">Restroom Cistern / Flapper Valve</option>
+            <option value="Cooling Tower">Cooling Tower Blowdown Bleed</option>
+            <option value="Irrigation Valve">Sub-surface Irrigation Valve</option>
+            <option value="Booster Pump">Booster Pump Station</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small text-muted">Priority Level</label>
+          <select class="form-select form-select-dark" id="modalPriority">
+            <option value="Emergency">Emergency (Immediate Dispatch)</option>
+            <option value="High" selected>High (Within 4 Hours)</option>
+            <option value="Medium">Medium (Scheduled Shift)</option>
+            <option value="Low">Low (Routine)</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small text-muted">Assign Plumbing / Field Technician</label>
+          <input type="text" class="form-control form-control-dark" id="modalTechnician" value="Rapid Plumbing Response Team Alpha">
+        </div>
+      </div>
+      <div class="modal-footer border-secondary border-opacity-25">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-holo btn-sm" onclick="submitQuickDispatch()">
+          <i class="bi bi-send-fill me-1"></i> Dispatch Work Order
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let diurnalChartInstance = null;
+let mnfTrendChartInstance = null;
+let waterBalanceChartInstance = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadWaterIntelligence();
+});
+
+async function loadWaterIntelligence() {
+  try {
+    const [mnfRes, wbRes, assetRes, stewRes] = await Promise.all([
+      fetch('/api/water-intelligence/mnf').then(r => r.json()),
+      fetch('/api/water-intelligence/water-balance').then(r => r.json()),
+      fetch('/api/water-intelligence/assets').then(r => r.json()),
+      fetch('/api/water-intelligence/stewardship').then(r => r.json())
+    ]);
+
+    if (mnfRes.data) renderMnf(mnfRes.data);
+    if (wbRes.data) renderWaterBalance(wbRes.data);
+    if (assetRes.data) renderAssets(assetRes.data);
+    if (stewRes.data) renderStewardship(stewRes.data);
+
+    document.getElementById('lastUpdatedBadge').textContent = 'UPDATED ' + new Date().toLocaleTimeString();
+  } catch (err) {
+    console.error('Error loading water intelligence:', err);
+  }
+}
+
+function renderMnf(data) {
+  document.getElementById('kpiMnfRate').textContent = data.overall_mnf_rate_lph + ' L/h';
+  document.getElementById('kpiLeakageFlow').textContent = data.background_leakage_flow_lph + ' L/h';
+  document.getElementById('kpiLncRate').textContent = data.legitimate_night_allowance_lph + ' L/h';
+  document.getElementById('kpiNdr').textContent = data.night_day_ratio;
+  document.getElementById('kpiNdrStatus').textContent = data.ndr_status;
+
+  const driftEl = document.getElementById('kpiMnfDrift');
+  driftEl.textContent = (data.drift_pct_14d >= 0 ? '+' : '') + data.drift_pct_14d + '%';
+  driftEl.className = data.drift_pct_14d > 5 ? 'badge bg-danger bg-opacity-25 text-danger font-mono' : 'badge bg-success bg-opacity-25 text-success font-mono';
+
+  document.getElementById('trendDriftBadge').textContent = (data.drift_pct_14d >= 0 ? '+' : '') + data.drift_pct_14d + '% (14-Day)';
+
+  // 1. Render Diurnal Chart
+  const ctxDiurnal = document.getElementById('diurnalChart').getContext('2d');
+  if (diurnalChartInstance) diurnalChartInstance.destroy();
+
+  // Create gradient for night window vs day
+  diurnalChartInstance = new Chart(ctxDiurnal, {
+    type: 'line',
+    data: {
+      labels: data.diurnal_hours,
+      datasets: [{
+        label: 'Average Flow Rate (L/h)',
+        data: data.diurnal_flow,
+        borderColor: '#06b6d4',
+        backgroundColor: 'rgba(6, 182, 212, 0.12)',
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.35,
+        pointBackgroundColor: data.diurnal_hours.map((h, i) => (i >= 2 && i < 4) ? '#f43f5e' : '#06b6d4'),
+        pointRadius: data.diurnal_hours.map((h, i) => (i >= 2 && i < 4) ? 5 : 2),
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `Flow: ${ctx.parsed.y} L/h` + (ctx.dataIndex >= 2 && ctx.dataIndex < 4 ? ' [Quiet Night Window]' : '')
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+      }
+    }
+  });
+
+  // 2. Render 14-Day MNF Trend Chart
+  const ctxTrend = document.getElementById('mnfTrendChart').getContext('2d');
+  if (mnfTrendChartInstance) mnfTrendChartInstance.destroy();
+
+  mnfTrendChartInstance = new Chart(ctxTrend, {
+    type: 'line',
+    data: {
+      labels: data.trend_labels,
+      datasets: [{
+        label: 'Mean MNF (L/h)',
+        data: data.trend_mean,
+        borderColor: data.drift_pct_14d > 5 ? '#f43f5e' : '#10b981',
+        borderWidth: 2,
+        tension: 0.3,
+        pointRadius: 3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+      }
+    }
+  });
+
+  // 3. Render Rankings Table
+  const tbody = document.getElementById('mnfMetersTableBody');
+  if (data.meter_rankings && data.meter_rankings.length > 0) {
+    tbody.innerHTML = data.meter_rankings.map(m => `
+      <tr>
+        <td class="fw-bold text-white font-mono">${m.meter_id}</td>
+        <td class="font-mono">${m.night_avg_lph} L/h</td>
+        <td class="font-mono text-muted">${m.day_peak_lph} L/h</td>
+        <td>
+          <span class="badge bg-${m.risk_class} bg-opacity-25 text-${m.risk_class} font-mono">
+            ${m.night_to_day_ratio}
+          </span>
+        </td>
+        <td class="fw-bold font-mono text-${m.risk_class}">
+          ${m.estimated_leak_lph > 0 ? '+' + m.estimated_leak_lph + ' L/h' : '0 L/h'}
+        </td>
+        <td>
+          <span class="badge bg-${m.risk_class} bg-opacity-10 text-${m.risk_class} border border-${m.risk_class} border-opacity-25">
+            ${m.status_text}
+          </span>
+        </td>
+        <td class="text-end">
+          <button class="btn btn-outline-info btn-sm py-1 px-2" onclick="openQuickDispatch('${m.meter_id}', ${m.estimated_leak_lph})">
+            <i class="bi bi-tools me-1"></i> Dispatch
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  } else {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">No meter telemetry available.</td></tr>`;
+  }
+}
+
+function renderWaterBalance(data) {
+  document.getElementById('kpiNrwPct').textContent = data.nrw_percentage + '%';
+  document.getElementById('kpiNrwCost').textContent = '$' + data.nrw_cost_usd.toLocaleString();
+  document.getElementById('kpiLossVolume').textContent = data.total_water_losses_liters.toLocaleString() + ' L';
+  document.getElementById('kpiIliScore').textContent = data.ili_score;
+  document.getElementById('kpiIliRating').textContent = data.ili_rating;
+
+  document.getElementById('wbSiv').textContent = data.system_input_volume_liters.toLocaleString() + ' L';
+  document.getElementById('wbBilled').textContent = data.billed_authorized_liters.toLocaleString() + ' L';
+  document.getElementById('wbBilledPct').textContent = ((data.billed_authorized_liters / data.system_input_volume_liters) * 100).toFixed(1) + '% of input';
+  document.getElementById('wbUnbilled').textContent = data.unbilled_authorized_liters.toLocaleString() + ' L';
+  document.getElementById('wbReal').textContent = data.real_losses_liters.toLocaleString() + ' L';
+  document.getElementById('wbApparent').textContent = data.apparent_losses_liters.toLocaleString() + ' L';
+
+  // Render Donut
+  const ctxDonut = document.getElementById('waterBalanceDonut').getContext('2d');
+  if (waterBalanceChartInstance) waterBalanceChartInstance.destroy();
+
+  waterBalanceChartInstance = new Chart(ctxDonut, {
+    type: 'doughnut',
+    data: {
+      labels: ['Billed Authorized', 'Unbilled Authorized', 'Real Physical Losses', 'Apparent Losses'],
+      datasets: [{
+        data: [data.billed_authorized_liters, data.unbilled_authorized_liters, data.real_losses_liters, data.apparent_losses_liters],
+        backgroundColor: ['#10b981', '#f59e0b', '#f43f5e', '#64748b'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 } } }
+      },
+      cutout: '70%'
+    }
+  });
+}
+
+function renderAssets(assets) {
+  if (assets.cooling_towers) {
+    const t = assets.cooling_towers;
+    document.getElementById('towerCoc').textContent = t.cycles_of_concentration;
+    document.getElementById('towerMakeup').textContent = t.makeup_water_m3_day + ' m³/d';
+    document.getElementById('towerBlowdown').textContent = t.blowdown_bleed_m3_day + ' m³/d';
+    document.getElementById('towerRec').textContent = t.recommendation;
+  }
+  if (assets.smart_irrigation) {
+    const ir = assets.smart_irrigation;
+    document.getElementById('irrigMoisture').textContent = ir.soil_moisture_index;
+    document.getElementById('irrigSaved').textContent = ir.water_saved_from_rain_delay_liters.toLocaleString() + ' L';
+    document.getElementById('irrigRec').textContent = ir.recommendation;
+  }
+  if (assets.restroom_fixtures) {
+    const r = assets.restroom_fixtures;
+    document.getElementById('restroomSurges').textContent = r.flush_surges_24h.toLocaleString();
+    document.getElementById('restroomLossRate').textContent = r.estimated_trickle_waste_lph + ' L/h';
+    document.getElementById('restroomRec').textContent = r.recommendation;
+  }
+}
+
+function renderStewardship(stew) {
+  if (stew.aws_standard) {
+    const aws = stew.aws_standard;
+    document.getElementById('awsBadge').innerHTML = `<i class="bi bi-award-fill me-1"></i> ${aws.certification_level} (${aws.composite_score}/100)`;
+    
+    const row = document.getElementById('awsOutcomesRow');
+    row.innerHTML = aws.outcomes.map(o => `
+      <div class="col-md">
+        <div class="p-2 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-25 h-100">
+          <small class="text-muted d-block text-truncate" style="font-size: 11px;">${o.name}</small>
+          <div class="d-flex justify-content-between align-items-baseline mt-1">
+            <span class="text-white fw-bold font-mono">${o.score} / 100</span>
+            <small class="text-info font-mono" style="font-size: 10px;">Target: ${o.benchmark}</small>
+          </div>
+          <div class="progress mt-1" style="height: 4px; background: rgba(255,255,255,0.06);">
+            <div class="progress-bar ${o.score >= o.benchmark ? 'bg-success' : 'bg-warning'}" style="width: ${o.score}%"></div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  if (stew.leed_compliance) {
+    const l = stew.leed_compliance;
+    document.getElementById('leedBadge').innerHTML = `<i class="bi bi-patch-check-fill me-1"></i> LEED WE: ${l.points_earned} / ${l.points_max} Points`;
+  }
+}
+
+function openQuickDispatch(meterId, leakLph) {
+  document.getElementById('modalMeterId').value = meterId;
+  document.getElementById('modalLeakLph').value = leakLph;
+  document.getElementById('modalMeterDisplay').value = meterId;
+  document.getElementById('modalLeakDisplay').value = leakLph;
+  
+  const modal = new bootstrap.Modal(document.getElementById('quickDispatchModal'));
+  modal.show();
+}
+
+async function submitQuickDispatch() {
+  const meterId = document.getElementById('modalMeterId').value;
+  const leakLph = parseFloat(document.getElementById('modalLeakLph').value) || 120.0;
+  const assetType = document.getElementById('modalAssetType').value;
+  const priority = document.getElementById('modalPriority').value;
+  const technician = document.getElementById('modalTechnician').value;
+
+  try {
+    const res = await fetch('/api/work-orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        meter_id: meterId,
+        estimated_leak_lph: leakLph,
+        asset_type: assetType,
+        priority: priority,
+        assigned_technician: technician,
+        title: `Remediate ${assetType} Nocturnal Leak at ${meterId}`
+      })
+    });
+    const result = await res.json();
+    if (result.status === 'success') {
+      const modalEl = document.getElementById('quickDispatchModal');
+      bootstrap.Modal.getInstance(modalEl).hide();
+      alert(`Work order ${result.work_order.ticket_id} dispatched successfully!`);
+    } else {
+      alert('Error creating work order: ' + result.message);
+    }
+  } catch (err) {
+    alert('Server communication error: ' + err.message);
+  }
+}
+</script>
+{% endblock %}

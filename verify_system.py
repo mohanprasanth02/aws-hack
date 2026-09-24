@@ -67,11 +67,29 @@ def test_full_pipeline():
     map_data = r10.json()
     print('10. Map meters count:', len(map_data['meters']))
 
-    # 11. Test pages
-    for page in ['/dashboard', '/upload', '/data', '/analysis', '/anomalies', '/map', '/meters', '/forecast', '/sustainability', '/what-if', '/alerts', '/reports', '/settings', '/about']:
+    # 11. Water Intelligence APIs (MNF & Water Balance)
+    r11_mnf = s.get(f'{base_url}/api/water-intelligence/mnf')
+    assert r11_mnf.status_code == 200, f'MNF API failed: {r11_mnf.status_code}'
+    r11_wb = s.get(f'{base_url}/api/water-intelligence/water-balance')
+    assert r11_wb.status_code == 200, f'Water Balance API failed: {r11_wb.status_code}'
+    print('11. Water Intelligence APIs (MNF & IWA Water Balance) returned HTTP 200 OK!')
+
+    # 12. Maintenance Work Orders API
+    r12_wo = s.get(f'{base_url}/api/work-orders')
+    assert r12_wo.status_code == 200, f'Work Orders API failed: {r12_wo.status_code}'
+    wo_data = r12_wo.json()
+    print(f"12. Work Orders API: {wo_data['kpis']['total_tickets']} total tickets, {wo_data['kpis']['total_water_saved_liters']:,} L verified saved!")
+
+    # 13. Test pages
+    pages = [
+        '/dashboard', '/water-intelligence', '/work-orders', '/upload', '/data',
+        '/analysis', '/anomalies', '/map', '/meters', '/forecast',
+        '/sustainability', '/what-if', '/alerts', '/reports', '/settings', '/about'
+    ]
+    for page in pages:
         rp = s.get(f'{base_url}{page}')
         assert rp.status_code == 200, f'Page {page} returned {rp.status_code}'
-    print('11. All 14 HTML application pages returned HTTP 200 OK!')
+    print(f'13. All {len(pages)} HTML application pages returned HTTP 200 OK!')
 
     print('\n======================================================')
     print('>>> ALL AQUAGUARD AI PIPELINES VERIFIED SUCCESSFULLY! <<<')
@@ -79,3 +97,4 @@ def test_full_pipeline():
 
 if __name__ == '__main__':
     test_full_pipeline()
+

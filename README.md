@@ -157,19 +157,64 @@ Download the pre-formatted CSV template from `/upload` or `/api/template/downloa
 | `/api/export/csv` | `GET` | Exports sanitized readings as CSV |
 | `/api/export/excel` | `GET` | Exports sanitized readings as Microsoft Excel (.xlsx) |
 | `/api/meters/map` | `GET` | Returns meters geo-coordinates and real-time risk scores |
+| `/api/water-intelligence/mnf` | `GET` | Minimum Night Flow (02:00–04:00 AM), background leakage floor, 14d drift |
+| `/api/water-intelligence/water-balance` | `GET` | IWA Standard Water Balance: SIV, NRW %, Real vs Apparent losses, ILI score |
+| `/api/water-intelligence/assets` | `GET` | Cooling tower cycles of conc, smart irrigation rain lock, cistern trickle |
+| `/api/water-intelligence/stewardship` | `GET` | Alliance for Water Stewardship (AWS) Standard & LEED WE credit scorecard |
+| `/api/work-orders` | `GET/POST`| Work order ticket lifecycle, field technician dispatch, water saved KPIs |
+| `/api/work-orders/<id>/dispatch` | `POST` | Assign technician to work order and transition status to Dispatched |
+| `/api/work-orders/<id>/resolve` | `POST` | Resolve ticket, log root cause & repair action, compute verified savings |
 
 ---
 
-## 9. Automated Testing
+## 9. Real-World Water Engineering Capabilities
 
-Execute the test suite verifying validation, cleaning, anomaly scoring, cause engine, and endpoints:
+### Minimum Night Flow (MNF) Analysis (IWA Standard)
+Between 02:00 AM and 04:00 AM, human activity drops to near zero. AquaGuard analyzes this nocturnal window to distinguish legitimate base demand from **Net Background Infrastructure Leakage (BIL)**, calculating the **Night-to-Day Ratio (NDR)** and tracking 14-day insidious drift.
+
+### District Metered Area (DMA) & IWA Water Balance
+Calculates Non-Revenue Water (NRW) according to the International Water Association framework:
+- **System Input Volume (SIV)** vs. **Billed Authorized Consumption**
+- **Real Physical Losses:** Underground fractures, burst mains, reservoir overflow
+- **Apparent Losses:** Meter calibration under-registration at low flow, unauthorized usage
+- **Infrastructure Leakage Index (ILI):** Rated Category A (World Class) through Category D.
+
+### Maintenance Work Orders & Closed-Loop Remediation
+Connects software insights directly to field plumbing crews:
+1. Anomaly or nocturnal leak detected
+2. Work order created with priority (Emergency, High, Medium, Low) and asset category
+3. Technician dispatched with automated assignment
+4. Technician performs physical pipe/valve repair and marks Resolved
+5. System computes **Verified Water Saved (Liters)**, utility cost recovery ($), and avoided CO2 emissions.
+
+---
+
+## 10. Production Deployment (Docker & AWS Cloud)
+
+### Run Locally with Docker Compose (PostgreSQL + TimescaleDB + Redis)
+```bash
+docker-compose up --build
+```
+Access the application at `http://localhost:5000`.
+
+### AWS Cloud Architecture (ECS Fargate + RDS + S3 + SES)
+The repository includes:
+- `Dockerfile`: Multi-stage Python 3.11 production image with Gunicorn and health checks.
+- `deploy/aws-ecs-task-definition.json`: Ready for AWS ECS Fargate serverless container deployment.
+- `.env.example`: Configuration template for AWS RDS PostgreSQL, AWS S3 buckets, AWS SES email, and Twilio SMS alerts.
+
+---
+
+## 11. Automated Testing
+
+Execute the test suite verifying validation, cleaning, anomaly scoring, cause engine, water intelligence, and work orders:
 ```bash
 python -m unittest tests/test_aquaguard.py
 ```
 
 ---
 
-## 10. Acceptance Checklist
+## 12. Acceptance Checklist
 
 - [x] Full authentication (Register, Login, Remember Me, Demo auto-fill)
 - [x] Drag-and-drop CSV/Excel upload with client progress bar
@@ -178,12 +223,18 @@ python -m unittest tests/test_aquaguard.py
 - [x] Multi-method hybrid anomaly engine (Rolling baseline, Z-Score, IQR, Isolation Forest)
 - [x] Normalized AquaGuard Risk Score (0–100) and severity categorizations
 - [x] Explainable root cause hypotheses & evidence checklists
-- [x] Anomaly investigation console with contextual timeline charts & persistent notes
-- [x] Operational alert center with AJAX status updates
+- [x] Minimum Night Flow (MNF) analysis with 02:00–04:00 AM quiet nocturnal window
+- [x] IWA District Metered Area (DMA) Water Balance & Non-Revenue Water (NRW) calculator
+- [x] Specialized asset diagnostics (Cooling towers, irrigation weather locks, restroom fixtures)
+- [x] Alliance for Water Stewardship (AWS) Standard & LEED Water Efficiency scorecards
+- [x] Maintenance Work Orders & field technician dispatch lifecycle
+- [x] Closed-loop verified water conservation & financial savings tracking
 - [x] Interactive Leaflet map with color-coded pulsing markers and unmapped drawer
 - [x] Predictive forecasting (7d/30d) with confidence uncertainty bounds
 - [x] AquaGuard Sustainability Score with 5 transparent factor decompositions
 - [x] Interactive What-If scenario simulator
 - [x] Empirical model evaluation comparing Precision, Recall, F1, and Confusion Matrices
 - [x] Institutional PDF report generator via ReportLab & CSV/Excel exports
+- [x] Production Dockerfile, docker-compose.yml, and AWS ECS Task Definition
 - [x] Pure responsive glassmorphic dark theme respecting `prefers-reduced-motion`
+

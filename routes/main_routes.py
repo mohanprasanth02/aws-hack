@@ -275,3 +275,18 @@ def settings():
 @main_bp.route('/about')
 def about():
     return render_template('pages/about.html')
+
+@main_bp.route('/water-intelligence')
+@login_required
+def water_intelligence():
+    meters = Meter.query.all()
+    return render_template('pages/water_intelligence.html', meters=meters)
+
+@main_bp.route('/work-orders')
+@login_required
+def work_orders():
+    from models import WorkOrder
+    meters = Meter.query.all()
+    orders = WorkOrder.query.order_by(WorkOrder.created_at.desc()).all()
+    return render_template('pages/work_orders.html', meters=meters, orders=orders)
+

@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: aquaguard-web
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=aquaguard-production-secret-key-replace-in-aws
+      - DATABASE_URL=postgresql://aquaguard:aquapass2026@db:5432/aquaguard_prod
+      - REDIS_URL=redis://redis:6379/0
+      - COST_PER_KL=2.50
+      - CO2_PER_KL=0.35
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - app_uploads:/app/uploads
+      - app_exports:/app/exports
+      - app_data:/app/data
+
+  db:
+    image: timescale/timescaledb-ha:pg16
+    container_name: aquaguard-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=aquaguard
+      - POSTGRES_PASSWORD=aquapass2026
+      - POSTGRES_DB=aquaguard_prod
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aquaguard -d aquaguard_prod"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: aquaguard-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  pg_data:
+  redis_data:
+  app_uploads:
+  app_exports:
+  app_data:

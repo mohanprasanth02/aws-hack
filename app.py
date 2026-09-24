@@ -3,7 +3,7 @@ from flask import Flask, render_template
 from flask_login import LoginManager
 from sqlalchemy import event
 from config import Config, BASE_DIR
-from models import db, User, Setting
+from models import db, User, Setting, WorkOrder, DistrictMeteredArea
 from routes.auth_routes import auth_bp
 from routes.main_routes import main_bp
 from routes.api_routes import api_bp
@@ -86,12 +86,74 @@ def create_app(config_class=Config):
                 s = Setting(key=key, value=val, description=desc)
                 db.session.add(s)
                 
+        # Seed sample Work Orders if table is empty
+        if WorkOrder.query.count() == 0:
+            sample_orders = [
+                WorkOrder(
+                    ticket_id='WO-20260924-101',
+                    meter_id='MTR-SCI-01',
+                    location='North Campus - Science Complex',
+                    title='Underground Distribution Line Pressure Departure',
+                    priority='Emergency',
+                    status='Dispatched',
+                    asset_type='Mains Pipeline',
+                    assigned_technician='Plumbing Rapid Response Team Alpha',
+                    estimated_leak_lph=420.0
+                ),
+                WorkOrder(
+                    ticket_id='WO-20260924-102',
+                    meter_id='MTR-STU-04',
+                    location='Central Quad - Student Union',
+                    title='Continuous Cistern Float Trickle & Urinal Diaphragm Loss',
+                    priority='High',
+                    status='In Progress',
+                    asset_type='Restroom Cistern',
+                    assigned_technician='Senior Plumber Marcus Vance',
+                    estimated_leak_lph=180.0
+                ),
+                WorkOrder(
+                    ticket_id='WO-20260923-098',
+                    meter_id='MTR-CEN-10',
+                    location='East Annex - Central Plant & HVAC',
+                    title='Evaporative Cooling Tower Blowdown Bleed Bleed-off Calibration',
+                    priority='Medium',
+                    status='Resolved',
+                    asset_type='Cooling Tower',
+                    assigned_technician='HVAC Utilities Engineer Sarah Chen',
+                    estimated_leak_lph=280.0,
+                    actual_findings='TDS solenoid valve was seized in partial open state.',
+                    action_taken='Disassembled solenoid, flushed mineral scale, replaced pilot diaphragm, verified 4.8 Cycles of Concentration.',
+                    water_saved_liters=64500.0,
+                    financial_savings_usd=161.25,
+                    co2_saved_kg=22.58
+                ),
+                WorkOrder(
+                    ticket_id='WO-20260922-085',
+                    meter_id='MTR-ATH-09',
+                    location='South Campus - Athletics & Aquatic Center',
+                    title='Sports Turf Sub-surface Irrigation Lateral Leak',
+                    priority='Low',
+                    status='Resolved',
+                    asset_type='Irrigation Valve',
+                    assigned_technician='Irrigation Tech Leo Ramirez',
+                    estimated_leak_lph=150.0,
+                    actual_findings='Pinhole crack on 2-inch PVC lateral line due to ground settlement.',
+                    action_taken='Excavated lateral pipe, installed compression repair sleeve, pressure tested to 4.5 bar.',
+                    water_saved_liters=28000.0,
+                    financial_savings_usd=70.00,
+                    co2_saved_kg=9.80
+                )
+            ]
+            for wo in sample_orders:
+                db.session.add(wo)
+
         db.session.commit()
         
         # Ensure bundled demo files are generated in data/
         save_bundled_demo_datasets(app.config['DATA_FOLDER'])
         
     return app
+
 
 app = create_app()
 

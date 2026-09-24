@@ -167,5 +167,63 @@ class AquaGuardTestSuite(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertIn(b'demo@aquaguard.ai', res.data)
 
+    # 9. Water Intelligence & Hydraulic Engineering Tests
+    def test_water_intelligence_mnf_and_balance(self):
+        from modules.water_intelligence import compute_mnf_analysis, compute_iwa_water_balance
+        readings = [
+            {'meter_id': 'MTR-01', 'timestamp': '2026-09-24 02:30:00', 'usage_liters': 180.0},
+            {'meter_id': 'MTR-01', 'timestamp': '2026-09-24 03:15:00', 'usage_liters': 190.0},
+            {'meter_id': 'MTR-01', 'timestamp': '2026-09-24 14:00:00', 'usage_liters': 650.0},
+            {'meter_id': 'MTR-02', 'timestamp': '2026-09-24 02:45:00', 'usage_liters': 80.0},
+            {'meter_id': 'MTR-02', 'timestamp': '2026-09-24 11:00:00', 'usage_liters': 520.0},
+        ]
+        mnf = compute_mnf_analysis(readings)
+        self.assertIn('overall_mnf_rate_lph', mnf)
+        self.assertIn('night_day_ratio', mnf)
+        self.assertGreater(mnf['overall_mnf_rate_lph'], 0)
+
+        wb = compute_iwa_water_balance(readings)
+        self.assertIn('system_input_volume_liters', wb)
+        self.assertIn('nrw_percentage', wb)
+        self.assertIn('ili_score', wb)
+
+    # 10. Work Order Lifecycle Integration Tests
+    def test_work_order_api_lifecycle(self):
+        from models import WorkOrder
+        # GET work orders
+        res = self.client.get('/api/work-orders')
+        self.assertEqual(res.status_code, 200)
+        data = res.json
+        self.assertEqual(data['status'], 'success')
+        self.assertIn('kpis', data)
+
+        # POST new work order
+        post_res = self.client.post('/api/work-orders', json={
+            'meter_id': 'MTR-TEST-01',
+            'title': 'Test Sub-surface Leak',
+            'asset_type': 'Mains Pipeline',
+            'priority': 'Emergency',
+            'estimated_leak_lph': 350.0
+        })
+        self.assertEqual(post_res.status_code, 200)
+        wo_obj = post_res.json['work_order']
+        wo_id = wo_obj['id']
+
+        # Dispatch work order
+        disp_res = self.client.post(f'/api/work-orders/{wo_id}/dispatch', json={
+            'technician': 'Test Unit Bravo'
+        })
+        self.assertEqual(disp_res.status_code, 200)
+
+        # Resolve work order
+        res_res = self.client.post(f'/api/work-orders/{wo_id}/resolve', json={
+            'actual_findings': 'Defective coupling replaced',
+            'action_taken': 'Installed new clamp and verified zero night flow'
+        })
+        self.assertEqual(res_res.status_code, 200)
+        self.assertEqual(res_res.json['work_order']['status'], 'Resolved')
+        self.assertGreater(res_res.json['work_order']['water_saved_liters'], 0)
+
 if __name__ == '__main__':
     unittest.main()
+

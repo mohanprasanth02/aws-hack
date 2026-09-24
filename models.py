@@ -212,3 +212,62 @@ class SimulationRun(db.Model):
     detection_rate = db.Column(db.Float, default=0.0)      # hybrid recall %
     latency_avg_seconds = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.now)
+
+class DistrictMeteredArea(db.Model):
+    """IWA District Metered Area (DMA) zone for water balance and NRW accounting."""
+    __tablename__ = 'dma_zones'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    dma_code = db.Column(db.String(50), unique=True, nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    inflow_meter_id = db.Column(db.String(50), nullable=True)
+    properties_count = db.Column(db.Integer, default=1)
+    average_pressure_bar = db.Column(db.Float, default=3.2)
+    target_leakage_liters_day = db.Column(db.Float, default=5000.0)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+class WorkOrder(db.Model):
+    """Maintenance dispatch and field remediation lifecycle for water anomalies and leaks."""
+    __tablename__ = 'work_orders'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    anomaly_id = db.Column(db.Integer, db.ForeignKey('anomalies.id', ondelete='SET NULL'), nullable=True)
+    meter_id = db.Column(db.String(50), nullable=False, index=True)
+    location = db.Column(db.String(100), nullable=True)
+    title = db.Column(db.String(255), nullable=False)
+    priority = db.Column(db.String(20), default='Medium')  # Low, Medium, High, Emergency
+    status = db.Column(db.String(30), default='Open', index=True)  # Open, Dispatched, In Progress, Resolved, Dismissed
+    asset_type = db.Column(db.String(50), default='Mains Pipeline')  # Mains Pipeline, Restroom Cistern, Cooling Tower, Irrigation Valve, Booster Pump
+    assigned_technician = db.Column(db.String(100), default='Field Plumbing Team')
+    estimated_leak_lph = db.Column(db.Float, default=0.0)
+    actual_findings = db.Column(db.Text, nullable=True)
+    action_taken = db.Column(db.Text, nullable=True)
+    water_saved_liters = db.Column(db.Float, default=0.0)
+    financial_savings_usd = db.Column(db.Float, default=0.0)
+    co2_saved_kg = db.Column(db.Float, default=0.0)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'ticket_id': self.ticket_id,
+            'anomaly_id': self.anomaly_id,
+            'meter_id': self.meter_id,
+            'location': self.location,
+            'title': self.title,
+            'priority': self.priority,
+            'status': self.status,
+            'asset_type': self.asset_type,
+            'assigned_technician': self.assigned_technician,
+            'estimated_leak_lph': round(self.estimated_leak_lph or 0.0, 1),
+            'actual_findings': self.actual_findings,
+            'action_taken': self.action_taken,
+            'water_saved_liters': round(self.water_saved_liters or 0.0, 1),
+            'financial_savings_usd': round(self.financial_savings_usd or 0.0, 2),
+            'co2_saved_kg': round(self.co2_saved_kg or 0.0, 2),
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M') if self.created_at else None,
+            'resolved_at': self.resolved_at.strftime('%Y-%m-%d %H:%M') if self.resolved_at else None
+        }
+

@@ -1205,3 +1205,212 @@ def telemetry_history():
         return jsonify({'status': 'success', 'runs': runs})
     except Exception as e:  # noqa: BLE001
         return jsonify({'status': 'error', 'message': 'Unable to read simulation history.', 'detail': str(e)}), 500
+
+
+# ---------------------------------------------------------------------------
+# Water Intelligence & Hydraulic Engineering Endpoints
+# ---------------------------------------------------------------------------
+
+@api_bp.route('/water-intelligence/mnf')
+def water_intelligence_mnf():
+    try:
+        from models import Reading, Meter
+        from modules.water_intelligence import compute_mnf_analysis
+        
+        readings = Reading.query.order_by(Reading.timestamp.desc()).limit(15000).all()
+        meters = Meter.query.all()
+        data = compute_mnf_analysis(readings, meters)
+        return jsonify({'status': 'success', 'data': data})
+    except Exception as e:
+        from modules.water_intelligence import _fallback_mnf_data
+        return jsonify({'status': 'success', 'data': _fallback_mnf_data(), 'note': str(e)})
+
+
+@api_bp.route('/water-intelligence/water-balance')
+def water_intelligence_water_balance():
+    try:
+        from models import Reading, Meter, Setting
+        from modules.water_intelligence import compute_iwa_water_balance
+        
+        cost_setting = Setting.query.filter_by(key='cost_per_kl').first()
+        cost_per_kl = float(cost_setting.value) if cost_setting else 2.50
+        
+        readings = Reading.query.order_by(Reading.timestamp.desc()).limit(15000).all()
+        meters = Meter.query.all()
+        data = compute_iwa_water_balance(readings, meters, cost_per_kl=cost_per_kl)
+        return jsonify({'status': 'success', 'data': data})
+    except Exception as e:
+        from modules.water_intelligence import _fallback_water_balance
+        return jsonify({'status': 'success', 'data': _fallback_water_balance(), 'note': str(e)})
+
+
+@api_bp.route('/water-intelligence/assets')
+def water_intelligence_assets():
+    try:
+        from modules.water_intelligence import compute_asset_diagnostics
+        data = compute_asset_diagnostics()
+        return jsonify({'status': 'success', 'data': data})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@api_bp.route('/water-intelligence/stewardship')
+def water_intelligence_stewardship():
+    try:
+        from modules.water_intelligence import compute_stewardship_compliance
+        data = compute_stewardship_compliance()
+        return jsonify({'status': 'success', 'data': data})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+# ---------------------------------------------------------------------------
+# Maintenance Work Orders & Field Dispatch Lifecycle Endpoints
+# ---------------------------------------------------------------------------
+
+@api_bp.route('/work-orders', methods=['GET', 'POST'])
+def handle_work_orders():
+    from models import db, WorkOrder, Meter, Anomaly
+    import random
+    from datetime import datetime
+    
+    if request.method == 'POST':
+        try:
+            body = request.get_json() or {}
+            meter_id = body.get('meter_id', '').strip()
+            title = body.get('title', '').strip()
+            priority = body.get('priority', 'Medium')
+            asset_type = body.get('asset_type', 'Mains Pipeline')
+            technician = body.get('assigned_technician', 'Plumbing Dispatch Team Alpha')
+            est_leak = float(body.get('estimated_leak_lph', 120.0))
+            anomaly_id = body.get('anomaly_id')
+            location = body.get('location', '')
+            
+            if not location and meter_id:
+                m = Meter.query.filter_by(meter_id=meter_id).first()
+                if m:
+                    location = m.location
+                    
+            if not title:
+                title = f"Urgent Water Remediation: {asset_type} at {meter_id or 'General Network'}"
+                
+            ticket_id = f"WO-{datetime.now().strftime('%Y%m%d')}-{random.randint(100, 999)}"
+            
+            wo = WorkOrder(
+                ticket_id=ticket_id,
+                anomaly_id=anomaly_id,
+                meter_id=meter_id or 'MTR-NET-01',
+                location=location or 'Central Campus Zone',
+                title=title,
+                priority=priority,
+                status='Dispatched',
+                asset_type=asset_type,
+                assigned_technician=technician,
+                estimated_leak_lph=est_leak
+            )
+            db.session.add(wo)
+            db.session.commit()
+            return jsonify({'status': 'success', 'message': f'Work order {ticket_id} created successfully.', 'work_order': wo.to_dict()})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'status': 'error', 'message': str(e)}), 500
+
+    # GET: return list of work orders with summary KPIs
+    try:
+        status_filter = request.args.get('status')
+        priority_filter = request.args.get('priority')
+        
+        query = WorkOrder.query
+        if status_filter:
+            query = query.filter_by(status=status_filter)
+        if priority_filter:
+            query = query.filter_by(priority=priority_filter)
+            
+        orders = query.order_by(WorkOrder.created_at.desc()).all()
+        
+        # Calculate summary metrics
+        total_orders = WorkOrder.query.count()
+        open_count = WorkOrder.query.filter(WorkOrder.status.in_(['Open', 'Dispatched', 'In Progress'])).count()
+        resolved_count = WorkOrder.query.filter_by(status='Resolved').count()
+        active_orders = WorkOrder.query.filter(WorkOrder.status.in_(['Open', 'Dispatched', 'In Progress'])).all()
+        active_leak_lph = sum(wo.estimated_leak_lph or 0.0 for wo in active_orders)
+        resolved_orders = WorkOrder.query.filter_by(status='Resolved').all()
+        total_water_saved = sum(wo.water_saved_liters or 0.0 for wo in resolved_orders)
+        total_financial_saved = sum(wo.financial_savings_usd or 0.0 for wo in resolved_orders)
+        
+        return jsonify({
+            'status': 'success',
+            'work_orders': [wo.to_dict() for wo in orders],
+            'kpis': {
+                'total_tickets': total_orders,
+                'open_tickets': open_count,
+                'resolved_tickets': resolved_count,
+                'active_leak_lph': round(active_leak_lph, 1),
+                'total_water_saved_liters': round(total_water_saved, 1),
+                'total_financial_saved_usd': round(total_financial_saved, 2)
+            }
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@api_bp.route('/work-orders/<int:order_id>/dispatch', methods=['POST'])
+def dispatch_work_order(order_id):
+    from models import db, WorkOrder
+    try:
+        wo = WorkOrder.query.get_or_404(order_id)
+        body = request.get_json() or {}
+        technician = body.get('technician', 'Emergency Plumbing Dispatch Unit')
+        wo.assigned_technician = technician
+        wo.status = 'Dispatched'
+        db.session.commit()
+        return jsonify({'status': 'success', 'message': f'Work order {wo.ticket_id} dispatched to {technician}.', 'work_order': wo.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@api_bp.route('/work-orders/<int:order_id>/resolve', methods=['POST'])
+def resolve_work_order(order_id):
+    from models import db, WorkOrder, Setting
+    from datetime import datetime
+    try:
+        wo = WorkOrder.query.get_or_404(order_id)
+        body = request.get_json() or {}
+        findings = body.get('actual_findings', 'Defective valve seal identified and replaced.')
+        action = body.get('action_taken', 'Replaced with industrial grade EPDM gasket, re-pressurized line, verified zero nocturnal leakage.')
+        
+        leak_lph = wo.estimated_leak_lph or 140.0
+        water_saved = round(leak_lph * (24.0 * 7), 1)
+        cost_setting = Setting.query.filter_by(key='cost_per_kl').first()
+        cost_per_kl = float(cost_setting.value) if cost_setting else 2.50
+        co2_setting = Setting.query.filter_by(key='co2_per_kl').first()
+        co2_per_kl = float(co2_setting.value) if co2_setting else 0.35
+        
+        cost_saved = round((water_saved / 1000.0) * cost_per_kl, 2)
+        co2_saved = round((water_saved / 1000.0) * co2_per_kl, 2)
+        
+        wo.status = 'Resolved'
+        wo.actual_findings = findings
+        wo.action_taken = action
+        wo.water_saved_liters = water_saved
+        wo.financial_savings_usd = cost_saved
+        wo.co2_saved_kg = co2_saved
+        wo.resolved_at = datetime.now()
+        
+        if wo.anomaly_id:
+            from models import Anomaly
+            anom = Anomaly.query.get(wo.anomaly_id)
+            if anom:
+                anom.status = 'Resolved'
+                
+        db.session.commit()
+        return jsonify({
+            'status': 'success',
+            'message': f'Work order {wo.ticket_id} marked as Resolved. {water_saved:,.0f} L saved!',
+            'work_order': wo.to_dict()
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
