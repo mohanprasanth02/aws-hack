@@ -83,7 +83,14 @@ def anomalies():
         query = query.filter_by(status=status)
         
     pagination = query.order_by(Anomaly.risk_score.desc(), Anomaly.timestamp.desc()).paginate(page=page, per_page=25, error_out=False)
-    meters = Meter.query.all()
+    meters = Meter.query.order_by(Meter.meter_id.asc()).all()
+    
+    # Fast real database counts for KPI strip across all pages
+    counts = dict(db.session.query(Anomaly.severity, db.func.count(Anomaly.id)).group_by(Anomaly.severity).all())
+    critical_count = counts.get('Critical', 0)
+    high_count = counts.get('High', 0)
+    medium_count = counts.get('Medium', 0)
+    total_count = Anomaly.query.count()
     
     return render_template(
         'pages/anomalies.html',
@@ -92,7 +99,11 @@ def anomalies():
         meters=meters,
         selected_severity=severity,
         selected_meter=meter_id,
-        selected_status=status
+        selected_status=status,
+        critical_count=critical_count,
+        high_count=high_count,
+        medium_count=medium_count,
+        total_count=total_count
     )
 
 @main_bp.route('/anomalies/<int:anomaly_id>')
@@ -102,26 +113,12 @@ def anomaly_detail(anomaly_id):
     meter = Meter.query.filter_by(meter_id=anomaly.meter_id).first()
     notes = InvestigationNote.query.filter_by(anomaly_id=anomaly_id).order_by(InvestigationNote.created_at.desc()).all()
     
-    # Retrieve surrounding reading history for context chart (-12h to +12h)
-    surrounding_readings = Reading.query.filter_by(meter_id=anomaly.meter_id)\
-        .filter(Reading.timestamp >= anomaly.timestamp - db.func.interval('12 hour') if 'sqlite' not in str(db.engine.url) else Reading.timestamp >= anomaly.timestamp)\
-        .order_by(Reading.timestamp.asc()).limit(30).all()
-        
-    # In SQLite, query surrounding by meter ordered near timestamp
-    all_readings = Reading.query.filter_by(meter_id=anomaly.meter_id).order_by(Reading.timestamp.asc()).all()
-    context_readings = []
-    if all_readings:
-        # Find index closest to anomaly.timestamp
-        closest_idx = 0
-        min_diff = None
-        for i, r in enumerate(all_readings):
-            diff = abs((r.timestamp - anomaly.timestamp).total_seconds())
-            if min_diff is None or diff < min_diff:
-                min_diff = diff
-                closest_idx = i
-        start_idx = max(0, closest_idx - 10)
-        end_idx = min(len(all_readings), closest_idx + 11)
-        context_readings = all_readings[start_idx:end_idx]
+    # Retrieve surrounding reading history for context chart (-10 to +10 readings)
+    before = Reading.query.filter(Reading.meter_id == anomaly.meter_id, Reading.timestamp <= anomaly.timestamp)\
+        .order_by(Reading.timestamp.desc()).limit(10).all()
+    after = Reading.query.filter(Reading.meter_id == anomaly.meter_id, Reading.timestamp > anomaly.timestamp)\
+        .order_by(Reading.timestamp.asc()).limit(10).all()
+    context_readings = list(reversed(before)) + after
         
     chart_data = {
         'labels': [r.timestamp.strftime('%m-%d %H:%M') for r in context_readings],

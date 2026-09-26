@@ -64,10 +64,6 @@
           <div class="nav-search-results" id="globalSearchResults"></div>
         </div>
 
-        <button type="button" class="btn btn-holo btn-sm d-none d-lg-inline-flex" onclick="triggerLaunchDemo(6, 21)" title="Run instant synthetic telemetry & anomaly pipeline">
-          <i class="bi bi-lightning-charge-fill"></i> Launch Demo
-        </button>
-
         <span class="aq-status" id="systemStatusBadge" title="Live system status">
           <span class="status-beacon" id="systemStatusBeacon"></span>
           <span>SYSTEM&nbsp;ONLINE</span>
@@ -120,7 +116,6 @@
     <a href="{{ url_for('main.reports') }}" class="{% if request.endpoint == 'main.reports' %}active{% endif %}"><i class="bi bi-file-earmark-pdf me-2"></i> Reports</a>
     <a href="{{ url_for('main.evaluation') }}" class="{% if request.endpoint == 'main.evaluation' %}active{% endif %}"><i class="bi bi-cpu me-2"></i> ML Evaluation</a>
     <a href="{{ url_for('main.analysis_history') }}" class="{% if request.endpoint == 'main.analysis_history' %}active{% endif %}"><i class="bi bi-journal-code me-2"></i> Pipeline Lineage</a>
-    <button type="button" class="btn btn-holo w-100 mt-3" onclick="triggerLaunchDemo(6, 21)"><i class="bi bi-lightning-charge-fill me-1"></i> Launch Demo</button>
   </div>
 
   <!-- Main canvas -->

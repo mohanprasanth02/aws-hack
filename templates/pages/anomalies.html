@@ -11,21 +11,22 @@
       <p class="text-secondary small mb-0">Surveillance registry of anomalous telemetry departures evaluated across 5 detection techniques.</p>
     </div>
     <div class="d-flex flex-wrap gap-2">
-      <a href="{{ url_for('main.anomalies') }}" class="btn btn-sm {% if not selected_severity %}btn-holo{% else %}btn-holo-alt{% endif %}">ALL</a>
-      <a href="{{ url_for('main.anomalies', severity='Critical') }}" class="btn btn-sm {% if selected_severity == 'Critical' %}btn-holo text-danger border-danger{% else %}btn-holo-alt text-danger{% endif %}">CRITICAL</a>
-      <a href="{{ url_for('main.anomalies', severity='High') }}" class="btn btn-sm {% if selected_severity == 'High' %}btn-holo text-warning border-warning{% else %}btn-holo-alt text-warning{% endif %}">HIGH</a>
-      <a href="{{ url_for('main.anomalies', severity='Medium') }}" class="btn btn-sm {% if selected_severity == 'Medium' %}btn-holo text-info border-info{% else %}btn-holo-alt text-info{% endif %}">MEDIUM</a>
-      <a href="{{ url_for('main.anomalies', status='Resolved') }}" class="btn btn-sm {% if selected_status == 'Resolved' %}btn-holo-eco{% else %}btn-holo-alt text-success{% endif %}">RESOLVED</a>
+      <a href="{{ url_for('main.anomalies', meter_id=selected_meter, status=selected_status) }}" class="btn btn-sm {% if not selected_severity and not selected_status %}btn-holo{% else %}btn-holo-alt{% endif %}">ALL</a>
+      <a href="{{ url_for('main.anomalies', severity='Critical', meter_id=selected_meter, status=selected_status) }}" class="btn btn-sm {% if selected_severity == 'Critical' %}btn-holo text-danger border-danger{% else %}btn-holo-alt text-danger{% endif %}">CRITICAL ({{ critical_count }})</a>
+      <a href="{{ url_for('main.anomalies', severity='High', meter_id=selected_meter, status=selected_status) }}" class="btn btn-sm {% if selected_severity == 'High' %}btn-holo text-warning border-warning{% else %}btn-holo-alt text-warning{% endif %}">HIGH ({{ high_count }})</a>
+      <a href="{{ url_for('main.anomalies', severity='Medium', meter_id=selected_meter, status=selected_status) }}" class="btn btn-sm {% if selected_severity == 'Medium' %}btn-holo text-info border-info{% else %}btn-holo-alt text-info{% endif %}">MEDIUM ({{ medium_count }})</a>
+      <a href="{{ url_for('main.anomalies', status='Resolved', severity=selected_severity, meter_id=selected_meter) }}" class="btn btn-sm {% if selected_status == 'Resolved' %}btn-holo-eco{% else %}btn-holo-alt text-success{% endif %}">RESOLVED</a>
     </div>
   </div>
 
   <!-- Detailed Filter Controls -->
   <form method="GET" action="{{ url_for('main.anomalies') }}" class="row g-2 align-items-center pt-3 border-top border-secondary border-opacity-10">
+    <input type="hidden" name="severity" value="{{ selected_severity }}">
     <div class="col-md-4">
       <select name="meter_id" class="form-select holo-select" onchange="this.form.submit()">
         <option value="">All Monitored Meters</option>
         {% for m in meters %}
-        <option value="{{ m.meter_id }}" {% if selected_meter == m.meter_id %}selected{% endif %}>{{ m.meter_id }} ({{ m.location }})</option>
+        <option value="{{ m.meter_id }}" {% if selected_meter == m.meter_id %}selected{% endif %}>{{ m.meter_id }} ({{ m.location or m.building or 'Campus Meter' }})</option>
         {% endfor %}
       </select>
     </div>
@@ -47,17 +48,11 @@
 
 <!-- Severity Command Strip -->
 <div class="row g-3 mb-4">
-  {% set ns = namespace(critical=0, high=0, medium=0) %}
-  {% for a in anomalies %}
-    {% if a.severity == 'Critical' %}{% set ns.critical = ns.critical + 1 %}{% endif %}
-    {% if a.severity == 'High' %}{% set ns.high = ns.high + 1 %}{% endif %}
-    {% if a.severity == 'Medium' %}{% set ns.medium = ns.medium + 1 %}{% endif %}
-  {% endfor %}
   <div class="col-md-3 col-6">
     <div class="glass-panel p-3 d-flex align-items-center justify-content-between">
       <div>
         <div class="text-secondary small fw-bold font-mono">CRITICAL</div>
-        <div class="h3 fw-bold mb-0" style="color: var(--red); text-shadow: var(--glow-red);">{{ ns.critical }}</div>
+        <div class="h3 fw-bold mb-0" style="color: var(--red);">{{ critical_count }}</div>
       </div>
       <i class="bi bi-exclamation-octagon fs-3" style="color: var(--red); opacity: .8;"></i>
     </div>
@@ -66,7 +61,7 @@
     <div class="glass-panel p-3 d-flex align-items-center justify-content-between">
       <div>
         <div class="text-secondary small fw-bold font-mono">HIGH</div>
-        <div class="h3 fw-bold mb-0" style="color: var(--amber); text-shadow: var(--glow-aqua);">{{ ns.high }}</div>
+        <div class="h3 fw-bold mb-0" style="color: var(--amber);">{{ high_count }}</div>
       </div>
       <i class="bi bi-exclamation-triangle fs-3" style="color: var(--amber); opacity: .8;"></i>
     </div>
@@ -75,7 +70,7 @@
     <div class="glass-panel p-3 d-flex align-items-center justify-content-between">
       <div>
         <div class="text-secondary small fw-bold font-mono">MEDIUM</div>
-        <div class="h3 fw-bold mb-0" style="color: var(--aqua-2);">{{ ns.medium }}</div>
+        <div class="h3 fw-bold mb-0" style="color: var(--aqua-2);">{{ medium_count }}</div>
       </div>
       <i class="bi bi-broadcast fs-3" style="color: var(--aqua-2); opacity: .8;"></i>
     </div>
@@ -84,7 +79,7 @@
     <div class="glass-panel p-3 d-flex align-items-center justify-content-between">
       <div>
         <div class="text-secondary small fw-bold font-mono">TOTAL EVENTS</div>
-        <div class="h3 fw-bold mb-0 text-white">{{ pagination.total if pagination else anomalies|length }}</div>
+        <div class="h3 fw-bold mb-0 text-white">{{ total_count }}</div>
       </div>
       <i class="bi bi-shield-exclamation fs-3" style="color: var(--text-dim); opacity: .8;"></i>
     </div>
@@ -112,7 +107,7 @@
       <tbody>
         {% if anomalies %}
           {% for a in anomalies %}
-          <tr class="{% if a.severity == 'Critical' %}holo-border-travel{% endif %}">
+          <tr class="{% if a.severity == 'Critical' %}table-row-critical{% endif %}">
             <td><span class="pill-severity pill-{{ a.severity.lower() }}">{{ a.severity }}</span></td>
             <td>
               <span class="fw-bold font-mono text-{{ 'danger' if a.risk_score >= 85 else ('warning' if a.risk_score >= 60 else 'info') }}">
@@ -152,7 +147,7 @@
   {% if pagination and pagination.pages > 1 %}
   <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top border-secondary border-opacity-10">
     <div class="text-muted small font-mono">
-      Page {{ pagination.page }} of {{ pagination.pages }}
+      Page {{ pagination.page }} of {{ pagination.pages }} ({{ pagination.total }} matching)
     </div>
     <ul class="pagination pagination-sm mb-0">
       {% if pagination.has_prev %}
