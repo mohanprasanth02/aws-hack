@@ -56,5 +56,10 @@ desktop.ini
 # Generated PDF Exports & Temp Uploads
 exports/*.pdf
 uploads/*
+static/uploads/*
 !exports/.gitkeep
 !uploads/.gitkeep
+!static/uploads/.gitkeep
+
+# Executables
+*.exe

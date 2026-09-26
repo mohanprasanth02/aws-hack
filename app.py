@@ -1,6 +1,6 @@
 import os
-from flask import Flask, render_template
-from flask_login import LoginManager
+from flask import Flask, render_template, request, make_response
+from flask_login import LoginManager, current_user, login_user
 from sqlalchemy import event
 from config import Config, BASE_DIR
 from models import db, User, Setting, WorkOrder, DistrictMeteredArea
@@ -22,14 +22,41 @@ def create_app(config_class=Config):
     db.init_app(app)
     
     login_manager = LoginManager()
-    login_manager.login_view = 'auth.login'
-    login_manager.login_message = 'Please log in to access the AquaGuard platform.'
-    login_manager.login_message_category = 'warning'
+    login_manager.login_view = 'main.dashboard'
     login_manager.init_app(app)
     
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+
+    # Preflight OPTIONS handler for Flutter Web CORS
+    @app.before_request
+    def handle_options_preflight():
+        if request.method == 'OPTIONS':
+            res = make_response('', 200)
+            res.headers['Access-Control-Allow-Origin'] = '*'
+            res.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
+            res.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Accept'
+            res.headers['Access-Control-Max-Age'] = '86400'
+            return res
+
+    # Global CORS headers on all responses
+    @app.after_request
+    def add_cors_headers(response):
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Accept'
+        return response
+
+    # Auto-login demo user on every request so login/register is never required
+    @app.before_request
+    def auto_login_demo():
+        if not current_user.is_authenticated:
+            demo_user = User.query.filter_by(email='demo@aquaguard.ai').first()
+            if not demo_user:
+                demo_user = User.query.first()
+            if demo_user:
+                login_user(demo_user, remember=True)
         
     # Register blueprints
     app.register_blueprint(auth_bp)
@@ -86,67 +113,7 @@ def create_app(config_class=Config):
                 s = Setting(key=key, value=val, description=desc)
                 db.session.add(s)
                 
-        # Seed sample Work Orders if table is empty
-        if WorkOrder.query.count() == 0:
-            sample_orders = [
-                WorkOrder(
-                    ticket_id='WO-20260924-101',
-                    meter_id='MTR-SCI-01',
-                    location='North Campus - Science Complex',
-                    title='Underground Distribution Line Pressure Departure',
-                    priority='Emergency',
-                    status='Dispatched',
-                    asset_type='Mains Pipeline',
-                    assigned_technician='Plumbing Rapid Response Team Alpha',
-                    estimated_leak_lph=420.0
-                ),
-                WorkOrder(
-                    ticket_id='WO-20260924-102',
-                    meter_id='MTR-STU-04',
-                    location='Central Quad - Student Union',
-                    title='Continuous Cistern Float Trickle & Urinal Diaphragm Loss',
-                    priority='High',
-                    status='In Progress',
-                    asset_type='Restroom Cistern',
-                    assigned_technician='Senior Plumber Marcus Vance',
-                    estimated_leak_lph=180.0
-                ),
-                WorkOrder(
-                    ticket_id='WO-20260923-098',
-                    meter_id='MTR-CEN-10',
-                    location='East Annex - Central Plant & HVAC',
-                    title='Evaporative Cooling Tower Blowdown Bleed Bleed-off Calibration',
-                    priority='Medium',
-                    status='Resolved',
-                    asset_type='Cooling Tower',
-                    assigned_technician='HVAC Utilities Engineer Sarah Chen',
-                    estimated_leak_lph=280.0,
-                    actual_findings='TDS solenoid valve was seized in partial open state.',
-                    action_taken='Disassembled solenoid, flushed mineral scale, replaced pilot diaphragm, verified 4.8 Cycles of Concentration.',
-                    water_saved_liters=64500.0,
-                    financial_savings_usd=161.25,
-                    co2_saved_kg=22.58
-                ),
-                WorkOrder(
-                    ticket_id='WO-20260922-085',
-                    meter_id='MTR-ATH-09',
-                    location='South Campus - Athletics & Aquatic Center',
-                    title='Sports Turf Sub-surface Irrigation Lateral Leak',
-                    priority='Low',
-                    status='Resolved',
-                    asset_type='Irrigation Valve',
-                    assigned_technician='Irrigation Tech Leo Ramirez',
-                    estimated_leak_lph=150.0,
-                    actual_findings='Pinhole crack on 2-inch PVC lateral line due to ground settlement.',
-                    action_taken='Excavated lateral pipe, installed compression repair sleeve, pressure tested to 4.5 bar.',
-                    water_saved_liters=28000.0,
-                    financial_savings_usd=70.00,
-                    co2_saved_kg=9.80
-                )
-            ]
-            for wo in sample_orders:
-                db.session.add(wo)
-
+        # Work orders start clean/empty for real-time dispatch from live risk anomalies
         db.session.commit()
         
         # Ensure bundled demo files are generated in data/

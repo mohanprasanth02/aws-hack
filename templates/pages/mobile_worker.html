@@ -2,63 +2,97 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AquaGuard Field — Mobile Companion</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>AquaGuard Field — Mobile Operations Console</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
   <style>
     :root {
-      --bg-dark: #070a0f;
-      --card-bg: #0f1523;
+      --bg-dark: #050810;
+      --card-bg: #0b111e;
+      --card-elevated: #111a2d;
       --neon-cyan: #00f2fe;
-      --neon-blue: #4facfe;
-      --solar-amber: #fbbf24;
-      --critical-red: #ff0055;
+      --neon-blue: #38bdf8;
+      --solar-amber: #f59e0b;
+      --critical-red: #ef4444;
       --emerald-green: #10b981;
-      --text-white: #ffffff;
+      --text-white: #f8fafc;
       --text-muted: #94a3b8;
+      --text-subtle: #64748b;
       --border-light: rgba(255, 255, 255, 0.08);
-      --border-cyan: rgba(0, 242, 254, 0.25);
+      --border-cyan: rgba(0, 242, 254, 0.35);
+      --font-display: 'Outfit', -apple-system, sans-serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
     body {
       background: #020408;
       color: var(--text-white);
-      font-family: 'Inter', -apple-system, sans-serif;
+      font-family: var(--font-body);
       min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 16px;
+      margin: 0;
+      overflow-x: hidden;
     }
 
-    /* Smartphone Frame */
-    .phone-container {
+    /* Outer Wrapper: Desktop Mockup Frame, Mobile Full-Screen */
+    .app-viewport {
       width: 100%;
-      max-width: 420px;
-      height: 840px;
+      max-width: 440px;
+      height: 100dvh;
+      max-height: 880px;
       background: var(--bg-dark);
-      border-radius: 40px;
-      border: 3px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 40px rgba(0, 242, 254, 0.15);
+      border-radius: 36px;
+      border: 2px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 30px 80px -15px rgba(0, 0, 0, 0.95), 0 0 50px rgba(0, 242, 254, 0.12);
       position: relative;
       overflow: hidden;
       display: flex;
       flex-direction: column;
     }
 
-    /* Dynamic Island / Notch */
-    .notch {
+    /* On Actual Mobile Screens: Edge-to-Edge Responsive Full-Bleed */
+    @media (max-width: 600px), (max-height: 700px) {
+      body {
+        background: var(--bg-dark);
+        align-items: stretch;
+      }
+      .app-viewport {
+        max-width: 100%;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+      }
+      .notch-bar {
+        display: none !important;
+      }
+    }
+
+    /* Subtle Notch indicator for desktop preview */
+    .notch-bar {
       width: 120px;
-      height: 24px;
+      height: 18px;
       background: #000;
-      border-radius: 0 0 16px 16px;
+      border-radius: 0 0 14px 14px;
       margin: 0 auto;
       z-index: 100;
       display: flex;
@@ -66,22 +100,49 @@
       justify-content: center;
       gap: 6px;
     }
-    .notch-camera { width: 8px; height: 8px; border-radius: 50%; background: #111; border: 1px solid #333; }
-    .notch-speaker { width: 40px; height: 3px; border-radius: 2px; background: #222; }
+    .notch-cam { width: 7px; height: 7px; border-radius: 50%; background: #111; border: 1px solid #333; }
+    .notch-spk { width: 36px; height: 3px; border-radius: 2px; background: #222; }
 
     /* Top App Bar */
     .app-header {
-      padding: 12px 18px;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid var(--border-light);
-      background: rgba(7, 10, 15, 0.9);
-      backdrop-filter: blur(10px);
-      z-index: 10;
+      background: rgba(7, 10, 16, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 20;
     }
-    .brand-title { font-size: 13px; font-weight: 800; letter-spacing: 1px; color: #fff; }
-    .brand-sub { font-size: 10px; color: var(--neon-cyan); font-family: 'JetBrains Mono', monospace; }
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .brand-title .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald-green);
+      box-shadow: 0 0 10px var(--emerald-green);
+      animation: pulseGlow 2s infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+    .brand-sub {
+      font-size: 10.5px;
+      color: var(--neon-cyan);
+      font-family: var(--font-mono);
+      margin-top: 1px;
+    }
 
     /* Screen Views */
     .screen-view {
@@ -89,60 +150,75 @@
       display: none;
       flex-direction: column;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       position: relative;
     }
     .screen-view.active { display: flex; }
+    .screen-view::-webkit-scrollbar { width: 3px; }
+    .screen-view::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
 
-    /* Scrollbars */
-    .screen-view::-webkit-scrollbar { width: 4px; }
-    .screen-view::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-
-    /* Cyber Cards */
+    /* Cards */
     .cyber-card {
       background: var(--card-bg);
       border-radius: 16px;
       border: 1px solid var(--border-light);
-      padding: 16px;
+      padding: 14px;
       margin-bottom: 12px;
-      transition: all 0.2s ease;
+      transition: border-color 0.2s, transform 0.15s;
     }
-    .cyber-card:active { transform: scale(0.99); }
+    .cyber-card:active {
+      transform: scale(0.99);
+      border-color: var(--border-cyan);
+    }
+    .cyber-card.critical-border {
+      border-left: 3px solid var(--critical-red);
+    }
+    .cyber-card.resolved-border {
+      border-left: 3px solid var(--emerald-green);
+    }
 
     /* Badges */
     .badge {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
       padding: 3px 8px;
       border-radius: 6px;
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 700;
       text-transform: uppercase;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-mono);
+      letter-spacing: 0.4px;
     }
-    .badge-emergency { background: rgba(255, 0, 85, 0.15); color: var(--critical-red); border: 1px solid rgba(255, 0, 85, 0.4); }
-    .badge-high { background: rgba(251, 191, 36, 0.15); color: var(--solar-amber); border: 1px solid rgba(251, 191, 36, 0.4); }
-    .badge-resolved { background: rgba(16, 185, 129, 0.15); color: var(--emerald-green); border: 1px solid rgba(16, 185, 129, 0.4); }
-    .badge-dispatched { background: rgba(0, 242, 254, 0.15); color: var(--neon-cyan); border: 1px solid rgba(0, 242, 254, 0.4); }
+    .badge-emergency { background: rgba(239, 68, 68, 0.16); color: var(--critical-red); border: 1px solid rgba(239, 68, 68, 0.35); }
+    .badge-high { background: rgba(245, 158, 11, 0.16); color: var(--solar-amber); border: 1px solid rgba(245, 158, 11, 0.35); }
+    .badge-medium { background: rgba(56, 189, 248, 0.16); color: var(--neon-blue); border: 1px solid rgba(56, 189, 248, 0.35); }
+    .badge-resolved { background: rgba(16, 185, 129, 0.16); color: var(--emerald-green); border: 1px solid rgba(16, 185, 129, 0.35); }
+    .badge-dispatched { background: rgba(0, 242, 254, 0.16); color: var(--neon-cyan); border: 1px solid rgba(0, 242, 254, 0.35); }
 
     /* Buttons */
     .btn-cyber {
-      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
-      color: #000;
+      background: linear-gradient(135deg, #00f2fe 0%, #38bdf8 100%);
+      color: #030712;
       border: none;
       border-radius: 12px;
-      padding: 12px 18px;
+      padding: 12px 16px;
       font-weight: 700;
       font-size: 13px;
+      font-family: var(--font-display);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      transition: 0.2s;
+      transition: all 0.2s;
+      box-shadow: 0 4px 15px rgba(0, 242, 254, 0.25);
     }
-    .btn-cyber:active { opacity: 0.85; transform: scale(0.98); }
+    .btn-cyber:active { opacity: 0.9; transform: scale(0.98); }
+    .btn-cyber:disabled { opacity: 0.5; cursor: not-allowed; }
+
     .btn-outline-cyber {
-      background: transparent;
-      border: 1px solid var(--neon-cyan);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(0, 242, 254, 0.4);
       color: var(--neon-cyan);
       border-radius: 12px;
       padding: 10px 14px;
@@ -153,6 +229,39 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-outline-cyber:active {
+      background: rgba(0, 242, 254, 0.1);
+      transform: scale(0.98);
+    }
+
+    /* Filter Chips */
+    .filter-chips-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+      scrollbar-width: none;
+    }
+    .filter-chips-bar::-webkit-scrollbar { display: none; }
+    .filter-chip {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-chip.active {
+      background: rgba(0, 242, 254, 0.18);
+      color: var(--neon-cyan);
+      border-color: var(--neon-cyan);
     }
 
     /* Map container */
@@ -165,90 +274,185 @@
     /* Bottom Navigation Dock */
     .bottom-nav {
       height: 64px;
-      background: rgba(10, 14, 22, 0.95);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: rgba(8, 12, 20, 0.96);
       border-top: 1px solid var(--border-light);
       display: flex;
       justify-content: space-around;
       align-items: center;
-      padding: 0 10px;
+      z-index: 20;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
     .nav-item {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       color: var(--text-muted);
-      font-size: 10px;
+      font-size: 11px;
+      font-weight: 600;
       cursor: pointer;
-      gap: 4px;
+      gap: 3px;
+      transition: color 0.15s, transform 0.1s;
+      position: relative;
+      height: 100%;
     }
-    .nav-item i { font-size: 18px; }
-    .nav-item.active { color: var(--neon-cyan); }
+    .nav-item i { font-size: 19px; }
+    .nav-item.active {
+      color: var(--neon-cyan);
+    }
+    .nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      width: 16px;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 8px var(--neon-cyan);
+    }
+    .nav-badge {
+      position: absolute;
+      top: 6px;
+      right: calc(50% - 18px);
+      background: var(--critical-red);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 10px;
+      font-family: var(--font-mono);
+    }
+
+    /* Form Controls */
+    .form-input {
+      width: 100%;
+      background: var(--card-elevated);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 13px;
+      font-family: var(--font-body);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.15);
+    }
+
+    /* Remediation quick chips */
+    .quick-chip {
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-light);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-block;
+      margin: 0 4px 6px 0;
+      transition: all 0.15s;
+    }
+    .quick-chip:active {
+      background: rgba(0, 242, 254, 0.15);
+      color: var(--neon-cyan);
+      border-color: var(--neon-cyan);
+    }
   </style>
 </head>
 <body>
 
-  <!-- Physical Phone Frame -->
-  <div class="phone-container">
-    <!-- Notch -->
-    <div class="notch">
-      <div class="notch-speaker"></div>
-      <div class="notch-camera"></div>
+  <!-- Physical Phone Frame Container -->
+  <div class="app-viewport">
+    <!-- Desktop Notch Bar -->
+    <div class="notch-bar">
+      <div class="notch-spk"></div>
+      <div class="notch-cam"></div>
     </div>
 
     <!-- App Header -->
     <header class="app-header">
       <div>
-        <div class="brand-title">AQUAGUARD FIELD</div>
-        <div class="brand-sub" id="headerWorkerName">Karthik R. (SNS Tech Lead)</div>
+        <div class="brand-title">
+          <span class="pulse-dot"></span>
+          <span>AQUAGUARD FIELD</span>
+        </div>
+        <div class="brand-sub" id="headerWorkerName">SNS Lead Field Engineer • 10.181.231.10</div>
       </div>
       <div style="display: flex; align-items: center; gap: 8px;">
-        <span class="badge badge-dispatched" style="font-size: 9px; padding: 2px 6px;">
+        <span class="badge badge-dispatched" style="font-size: 9px; padding: 2px 7px;">
           <i class="bi bi-broadcast me-1"></i> LIVE
         </span>
-        <button onclick="loadWorkerTasks()" style="background: none; border: none; color: #fff; cursor: pointer; font-size: 15px;">
+        <button onclick="loadWorkerTasks()" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-light); color: #fff; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="Refresh tasks">
           <i class="bi bi-arrow-repeat"></i>
         </button>
       </div>
     </header>
 
+    <!-- ========================================== -->
     <!-- SCREEN 1: TASK FEED (Work Queue) -->
-    <div class="screen-view active" id="viewFeed" style="padding: 16px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <div style="font-size: 12px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-muted);">ACTIVE DISPATCH QUEUE</div>
-        <div class="badge badge-high" id="activeTicketsCount">0 Active</div>
+    <!-- ========================================== -->
+    <div class="screen-view active" id="viewFeed" style="padding: 14px;">
+      
+      <!-- Metrics Strip -->
+      <div style="background: linear-gradient(135deg, rgba(0, 242, 254, 0.08), rgba(56, 189, 248, 0.02)); border-radius: 14px; border: 1px solid var(--border-cyan); padding: 12px 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Campus Queue</div>
+          <div style="font-size: 18px; font-weight: 800; color: #fff; font-family: var(--font-display);" id="statActiveCount">0 Active Tasks</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 10px; color: var(--text-muted); font-family: var(--font-mono);">Cumulative Departure</div>
+          <div style="font-size: 16px; font-weight: 800; color: var(--critical-red); font-family: var(--font-mono);" id="statTotalLoss">0 L/h</div>
+        </div>
       </div>
 
+      <!-- Filter Chips -->
+      <div class="filter-chips-bar">
+        <div class="filter-chip active" onclick="applyTaskFilter('all', this)">All Tickets</div>
+        <div class="filter-chip" onclick="applyTaskFilter('Emergency', this)">Critical</div>
+        <div class="filter-chip" onclick="applyTaskFilter('Dispatched', this)">Dispatched</div>
+        <div class="filter-chip" onclick="applyTaskFilter('En Route', this)">En Route</div>
+        <div class="filter-chip" onclick="applyTaskFilter('Resolved', this)">Resolved</div>
+      </div>
+
+      <!-- Task List Container -->
       <div id="taskListContainer">
         <div style="text-align: center; color: var(--text-muted); padding: 40px 0;">
-          <div class="spinner-border" style="width: 20px; height: 20px; border-width: 2px; color: var(--neon-cyan); margin-bottom: 8px;"></div>
-          <div style="font-size: 12px;">Syncing with central campus core...</div>
+          <div class="spinner-border" style="width: 22px; height: 22px; border: 2px solid rgba(0,242,254,0.3); border-top-color: var(--neon-cyan); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 10px auto;"></div>
+          <div style="font-size: 12px;">Syncing with central core...</div>
         </div>
       </div>
     </div>
 
+    <!-- ========================================== -->
     <!-- SCREEN 2: GPS ROUTE NAVIGATION -->
+    <!-- ========================================== -->
     <div class="screen-view" id="viewRoute">
       <!-- Heads-up Distance & ETA Bar -->
-      <div style="position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000; background: rgba(7,10,15,0.92); backdrop-filter: blur(15px); border-radius: 14px; border: 1px solid var(--border-light); padding: 12px; display: flex; align-items: center; gap: 10px;">
-        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(0,242,254,0.15); display: flex; align-items: center; justify-content: center; color: var(--neon-cyan); font-size: 18px;">
+      <div style="position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000; background: rgba(7,10,16,0.92); backdrop-filter: blur(15px); border-radius: 14px; border: 1px solid var(--border-light); padding: 12px; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.7);">
+        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(0,242,254,0.15); display: flex; align-items: center; justify-content: center; color: var(--neon-cyan); font-size: 18px; flex-shrink: 0;">
           <i class="bi bi-compass-fill"></i>
         </div>
-        <div style="flex: 1;">
-          <div style="font-size: 12px; font-weight: 700; color: #fff;" id="routeTargetBuilding">Admin Block</div>
-          <div style="font-size: 11px; color: var(--solar-amber); font-family: 'JetBrains Mono', monospace;" id="routeDistanceEta">180m away • ~2 min walk</div>
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="routeTargetBuilding">Campus Location</div>
+          <div style="font-size: 11px; color: var(--solar-amber); font-family: var(--font-mono);" id="routeDistanceEta">Navigating to meter...</div>
         </div>
-        <button onclick="openExternalGoogleMaps()" style="background: none; border: 1px solid var(--border-light); color: var(--neon-cyan); border-radius: 8px; padding: 6px 10px; font-size: 11px; cursor: pointer;">
-          <i class="bi bi-box-arrow-up-right me-1"></i>Maps
+        <button onclick="openExternalGoogleMaps()" style="background: rgba(0,242,254,0.1); border: 1px solid var(--neon-cyan); color: var(--neon-cyan); border-radius: 8px; padding: 6px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: gap: 4px;">
+          <i class="bi bi-box-arrow-up-right"></i> Maps
         </button>
       </div>
 
       <!-- Leaflet Map Container -->
       <div id="mobileMap"></div>
 
-      <!-- Bottom Action Card -->
-      <div style="position: absolute; bottom: 12px; left: 12px; right: 12px; z-index: 1000; background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border-cyan); padding: 14px;">
+      <!-- Bottom Floating Action HUD -->
+      <div style="position: absolute; bottom: 12px; left: 12px; right: 12px; z-index: 1000; background: rgba(11, 17, 30, 0.95); backdrop-filter: blur(15px); border-radius: 16px; border: 1px solid var(--border-cyan); padding: 14px; box-shadow: 0 15px 35px rgba(0,0,0,0.8);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <div style="font-size: 12px; font-weight: 700;" id="routeTaskTitle">Fix Isolation Valve</div>
+          <div style="font-size: 12.5px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px;" id="routeTaskTitle">Remediation Task</div>
           <span class="badge badge-emergency" id="routeLeakRate">180 L/h</span>
         </div>
         <div style="display: flex; gap: 8px;">
@@ -262,51 +466,82 @@
       </div>
     </div>
 
-    <!-- SCREEN 3: PHOTO PROOF UPLOAD -->
-    <div class="screen-view" id="viewPhoto" style="padding: 16px;">
+    <!-- ========================================== -->
+    <!-- SCREEN 3: PHOTO PROOF UPLOAD & RESOLUTION -->
+    <!-- ========================================== -->
+    <div class="screen-view" id="viewPhoto" style="padding: 14px;">
       <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-        <button onclick="switchTab('feed')" style="background: none; border: none; color: #fff; font-size: 18px; cursor: pointer;">
+        <button onclick="switchTab('feed')" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-light); color: #fff; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
           <i class="bi bi-arrow-left"></i>
         </button>
         <div>
-          <div style="font-size: 13px; font-weight: 700; color: #fff;">PROOF OF WORK</div>
-          <div style="font-size: 10.5px; color: var(--text-muted);" id="photoTaskTicketId">WO-20260924-101</div>
+          <div style="font-family: var(--font-display); font-size: 15px; font-weight: 800; color: #fff;">PROOF OF WORK VERIFICATION</div>
+          <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);" id="photoTaskTicketId">Select Work Order Below</div>
         </div>
       </div>
 
-      <!-- Camera Preview Box -->
-      <div id="photoPreviewContainer" style="width: 100%; height: 220px; background: rgba(0,0,0,0.5); border-radius: 16px; border: 1.5px dashed var(--neon-cyan); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 14px;">
+      <!-- Work Order Selector (Enables direct remediation even if opened from tab) -->
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 10.5px; font-weight: 700; color: var(--neon-cyan); letter-spacing: 0.5px; display: block; margin-bottom: 5px;">ACTIVE WORK ORDER TICKET</label>
+        <select id="activeWorkOrderSelect" class="form-input" onchange="onSelectTaskForPhoto(this.value)">
+          <option value="">-- Choose active work order --</option>
+        </select>
+      </div>
+
+      <!-- Camera / Image Preview Box -->
+      <div id="photoPreviewContainer" style="width: 100%; height: 210px; background: rgba(0,0,0,0.5); border-radius: 16px; border: 1.5px dashed var(--neon-cyan); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 14px;">
         <img id="photoPreviewImg" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-        <div id="photoPlaceholderContent" style="text-align: center;">
-          <i class="bi bi-camera-fill" style="font-size: 38px; color: var(--neon-cyan); margin-bottom: 8px; display: inline-block;"></i>
-          <div style="font-size: 12px; font-weight: 700;">Take Photo of Repaired Valve</div>
-          <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">Instant visual verification for web admin</div>
+        <div id="photoPlaceholderContent" style="text-align: center; padding: 16px;">
+          <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(0, 242, 254, 0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; color: var(--neon-cyan); font-size: 24px;">
+            <i class="bi bi-camera-fill"></i>
+          </div>
+          <div style="font-size: 13px; font-weight: 700; color: #fff;">Photograph Repaired Valve / Meter</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">Tap to open phone camera or gallery</div>
         </div>
-        <input type="file" id="cameraFileInput" accept="image/*" capture="environment" style="position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer;" onchange="handlePhotoSelected(event)">
+        <input type="file" id="cameraFileInput" accept="image/*" style="position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer;" onchange="handlePhotoSelected(event)">
+        
+        <button id="btnRemovePhoto" onclick="removeSelectedPhoto(event)" style="display: none; position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); border: 1px solid var(--border-light); color: #fff; border-radius: 8px; padding: 4px 8px; font-size: 11px; cursor: pointer; z-index: 10;">
+          <i class="bi bi-x-circle me-1"></i> Retake
+        </button>
       </div>
 
+      <!-- Quick Remediation Preset Chips -->
       <div style="margin-bottom: 12px;">
-        <label style="font-size: 10px; font-weight: 700; color: var(--neon-cyan); letter-spacing: 0.5px; display: block; margin-bottom: 4px;">ROOT CAUSE FOUND</label>
-        <textarea id="inputFindings" rows="2" style="width: 100%; background: var(--card-bg); border: 1px solid var(--border-light); border-radius: 10px; padding: 8px 10px; color: #fff; font-size: 12px; outline: none;">Cracked valve gasket and loose union ring; persistent 180 L/h water departure.</textarea>
+        <label style="font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; display: block; margin-bottom: 6px;">QUICK REMEDIATION TEMPLATES</label>
+        <div>
+          <span class="quick-chip" onclick="applyPreset('Cracked valve gasket', 'Replaced with industrial EPDM seal, torqued to spec')">EPDM Seal</span>
+          <span class="quick-chip" onclick="applyPreset('Loose pipe coupling flange', 'Tightened flange bolts, re-pressurized to 3.2 bar')">Flange Torqued</span>
+          <span class="quick-chip" onclick="applyPreset('Defective bypass isolation valve', 'Installed new PN16 gate valve, sealed joint')">Gate Valve</span>
+          <span class="quick-chip" onclick="applyPreset('Nocturnal baseline departure', 'Serviced sub-meter register & verified zero flow')">Sub-Meter</span>
+        </div>
+      </div>
+
+      <!-- Form Inputs -->
+      <div style="margin-bottom: 12px;">
+        <label style="font-size: 10px; font-weight: 700; color: var(--neon-cyan); letter-spacing: 0.5px; display: block; margin-bottom: 4px;">ACTUAL ROOT CAUSE</label>
+        <textarea id="inputFindings" class="form-input" rows="2">Cracked isolation valve gasket causing continuous departure.</textarea>
       </div>
 
       <div style="margin-bottom: 16px;">
         <label style="font-size: 10px; font-weight: 700; color: var(--neon-cyan); letter-spacing: 0.5px; display: block; margin-bottom: 4px;">CORRECTIVE ACTION TAKEN</label>
-        <textarea id="inputAction" rows="2" style="width: 100%; background: var(--card-bg); border: 1px solid var(--border-light); border-radius: 10px; padding: 8px 10px; color: #fff; font-size: 12px; outline: none;">Replaced with industrial EPDM gasket, re-pressurized to 3.2 bar, zero leaks verified.</textarea>
+        <textarea id="inputAction" class="form-input" rows="2">Replaced with high-grade EPDM gasket, re-pressurized line, verified zero nocturnal leakage.</textarea>
       </div>
 
       <button class="btn-cyber" style="width: 100%; padding: 14px;" id="btnSubmitProof" onclick="submitPhotoProof()">
-        <i class="bi bi-cloud-arrow-up-fill"></i> RESOLVE & SYNC TO WEB APP
+        <i class="bi bi-cloud-arrow-up-fill"></i> SUBMIT PROOF & RESOLVE
       </button>
 
-      <div id="uploadStatusMsg" style="display: none; text-align: center; font-size: 12px; margin-top: 10px; font-weight: 600;"></div>
+      <div id="uploadStatusMsg" style="display: none; border-radius: 12px; padding: 12px; font-size: 12px; margin-top: 12px; font-weight: 600; text-align: center; border: 1px solid rgba(255,255,255,0.1);"></div>
     </div>
 
-    <!-- Bottom Navigation Dock -->
+    <!-- ========================================== -->
+    <!-- BOTTOM ERGONOMIC DOCK -->
+    <!-- ========================================== -->
     <nav class="bottom-nav">
       <div class="nav-item active" id="navFeed" onclick="switchTab('feed')">
         <i class="bi bi-list-task"></i>
         <span>Tasks</span>
+        <span class="nav-badge" id="navBadgeCount" style="display: none;">0</span>
       </div>
       <div class="nav-item" id="navRoute" onclick="switchTab('route')">
         <i class="bi bi-geo-alt-fill"></i>
@@ -319,23 +554,31 @@
     </nav>
   </div>
 
+  <style>
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     let activeTasks = [];
     let currentTask = null;
     let selectedPhotoFile = null;
+    let selectedPhotoBase64 = null;
+    let currentFilter = 'all';
     let mapInstance = null;
     let workerMarker = null;
     let meterMarker = null;
     let routePolyline = null;
 
-    // Worker starting position (near hostels at SNS campus)
+    // Worker starting position (near SNS Kalvi Nagar campus grid)
     let workerLat = 11.1002;
     let workerLon = 77.0255;
 
     document.addEventListener('DOMContentLoaded', () => {
       loadWorkerTasks();
       initMobileMap();
+      // Auto-poll tasks every 6 seconds for continuous live sync
+      setInterval(loadWorkerTasks, 6000);
     });
 
     async function loadWorkerTasks() {
@@ -343,65 +586,109 @@
         const res = await fetch('/api/worker/tasks?email=worker@aquaguard.io&active_only=false');
         const data = await res.json();
         if (data.status === 'success') {
-          activeTasks = data.tasks;
+          activeTasks = data.tasks || [];
           renderTaskList();
+          updateActiveWorkOrderDropdown();
         }
       } catch (err) {
         console.error('Error fetching tasks:', err);
       }
     }
 
+    function applyTaskFilter(filter, el) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      if (el) el.classList.add('active');
+      renderTaskList();
+    }
+
     function renderTaskList() {
       const container = document.getElementById('taskListContainer');
-      const openCount = activeTasks.filter(t => t.status !== 'Resolved').length;
-      document.getElementById('activeTicketsCount').textContent = `${openCount} Active`;
+      const unresolved = activeTasks.filter(t => t.status !== 'Resolved');
+      
+      document.getElementById('statActiveCount').textContent = `${unresolved.length} Active Tasks`;
+      
+      const totalLoss = unresolved.reduce((sum, t) => sum + (parseFloat(t.estimated_leak_lph) || 0), 0);
+      document.getElementById('statTotalLoss').textContent = `${Math.round(totalLoss).toLocaleString()} L/h`;
 
-      if (activeTasks.length === 0) {
-        container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 40px 0;">All campus meters nominal. No active dispatches!</div>`;
+      const badge = document.getElementById('navBadgeCount');
+      if (badge) {
+        if (unresolved.length > 0) {
+          badge.textContent = unresolved.length;
+          badge.style.display = 'block';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+
+      let displayed = activeTasks;
+      if (currentFilter === 'Emergency') {
+        displayed = activeTasks.filter(t => t.priority === 'Emergency' || t.priority === 'High');
+      } else if (currentFilter === 'Dispatched') {
+        displayed = activeTasks.filter(t => t.status === 'Dispatched');
+      } else if (currentFilter === 'En Route') {
+        displayed = activeTasks.filter(t => t.status === 'En Route');
+      } else if (currentFilter === 'Resolved') {
+        displayed = activeTasks.filter(t => t.status === 'Resolved');
+      }
+
+      if (displayed.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; color: var(--text-muted); padding: 50px 16px;">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(16, 185, 129, 0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; color: var(--emerald-green); font-size: 24px;">
+              <i class="bi bi-shield-check"></i>
+            </div>
+            <div style="font-weight: 700; color: #fff; font-size: 14px;">Grid Baseline Normal</div>
+            <div style="font-size: 11px; margin-top: 4px;">No active work orders match filter '${currentFilter}'.</div>
+          </div>
+        `;
         return;
       }
 
-      container.innerHTML = activeTasks.map(t => {
-        let badgeClass = 'badge-high';
+      container.innerHTML = displayed.map(t => {
+        let badgeClass = 'badge-medium';
         if (t.priority === 'Emergency') badgeClass = 'badge-emergency';
-        if (t.status === 'Resolved') badgeClass = 'badge-resolved';
+        else if (t.priority === 'High') badgeClass = 'badge-high';
+        else if (t.status === 'Resolved') badgeClass = 'badge-resolved';
+
+        let borderClass = t.status === 'Resolved' ? 'resolved-border' : (t.priority === 'Emergency' ? 'critical-border' : '');
 
         return `
-          <div class="cyber-card">
+          <div class="cyber-card ${borderClass}">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <span style="font-family: monospace; font-weight: 700; color: #fff; font-size: 12px;">${t.ticket_id}</span>
+              <span style="font-family: var(--font-mono); font-weight: 700; color: #fff; font-size: 12px;">${t.ticket_id}</span>
               <div style="display: flex; gap: 4px;">
                 <span class="badge ${badgeClass}">${t.priority}</span>
                 <span class="badge ${t.status === 'Resolved' ? 'badge-resolved' : 'badge-dispatched'}">${t.status}</span>
               </div>
             </div>
 
-            <div style="font-weight: 700; font-size: 13.5px; color: #fff; margin-bottom: 4px;">${t.title}</div>
+            <div style="font-weight: 700; font-size: 13.5px; color: #fff; margin-bottom: 4px; line-height: 1.3;">${t.title}</div>
             <div style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-bottom: 10px;">
               <i class="bi bi-geo-alt-fill" style="color: var(--neon-cyan);"></i> ${t.location}
             </div>
 
             <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 11px;">
               <div>
-                <span style="color: var(--text-muted);">Est. Loss: </span>
-                <strong style="color: var(--critical-red); font-family: monospace;">${t.estimated_leak_lph} L/h</strong>
+                <span style="color: var(--text-muted);">Leak Rate: </span>
+                <strong style="color: var(--critical-red); font-family: var(--font-mono);">${t.estimated_leak_lph > 0 ? t.estimated_leak_lph + ' L/h' : '--'}</strong>
               </div>
               <div>
-                <span style="color: var(--text-muted);">${t.asset_type}</span>
+                <span style="color: var(--text-muted);">${t.asset_type || 'Mains Pipe'}</span>
               </div>
             </div>
 
             <div style="display: flex; gap: 8px;">
               <button class="btn-outline-cyber" style="flex: 1;" onclick='navigateToTaskRoute(${JSON.stringify(t)})'>
-                <i class="bi bi-directions"></i> GPS Route
+                <i class="bi bi-compass"></i> Route GPS
               </button>
               ${t.status !== 'Resolved' ? `
                 <button class="btn-cyber" style="flex: 1;" onclick='openPhotoCaptureForTask(${JSON.stringify(t)})'>
                   <i class="bi bi-camera-fill"></i> Upload Proof
                 </button>
               ` : `
-                <button class="btn-outline-cyber" style="flex: 1; border-color: var(--emerald-green); color: var(--emerald-green);" disabled>
-                  <i class="bi bi-check-circle-fill"></i> Verified
+                <button class="btn-outline-cyber" style="flex: 1; border-color: rgba(16, 185, 129, 0.4); color: var(--emerald-green); background: rgba(16, 185, 129, 0.08);" onclick='openPhotoCaptureForTask(${JSON.stringify(t)})'>
+                  <i class="bi bi-check-circle-fill"></i> Proof View
                 </button>
               `}
             </div>
@@ -410,10 +697,40 @@
       }).join('');
     }
 
+    function updateActiveWorkOrderDropdown() {
+      const select = document.getElementById('activeWorkOrderSelect');
+      if (!select) return;
+
+      const currentVal = select.value;
+      const unresolved = activeTasks.filter(t => t.status !== 'Resolved');
+
+      let options = `<option value="">-- Choose active work order (${unresolved.length} available) --</option>`;
+      activeTasks.forEach(t => {
+        const isSelected = currentTask && currentTask.id === t.id ? 'selected' : '';
+        options += `<option value="${t.id}" ${isSelected}>[${t.ticket_id}] ${t.title} (${t.priority})</option>`;
+      });
+      select.innerHTML = options;
+    }
+
+    function onSelectTaskForPhoto(orderId) {
+      if (!orderId) {
+        currentTask = null;
+        document.getElementById('photoTaskTicketId').textContent = 'Select Work Order Below';
+        return;
+      }
+      const match = activeTasks.find(t => t.id == orderId);
+      if (match) {
+        currentTask = match;
+        document.getElementById('photoTaskTicketId').textContent = `${match.ticket_id} • ${match.location}`;
+      }
+    }
+
     function initMobileMap() {
       const mapEl = document.getElementById('mobileMap');
       if (!mapEl) return;
       mapInstance = L.map('mobileMap', { zoomControl: false }).setView([11.1018, 77.0275], 17);
+      
+      // Satellite tile layer
       L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
         maxZoom: 20,
         subdomains: ['mt0','mt1','mt2','mt3']
@@ -429,29 +746,30 @@
 
       document.getElementById('routeTargetBuilding').textContent = task.location;
       document.getElementById('routeTaskTitle').textContent = task.title;
-      document.getElementById('routeLeakRate').textContent = `${task.estimatedLeakLph} L/h`;
+      document.getElementById('routeLeakRate').textContent = `${task.estimated_leak_lph || 140} L/h`;
+      document.getElementById('routeDistanceEta').textContent = `Routing to ${task.meter_id || 'Campus Meter'}...`;
 
       if (workerMarker) mapInstance.removeLayer(workerMarker);
       if (meterMarker) mapInstance.removeLayer(meterMarker);
       if (routePolyline) mapInstance.removeLayer(routePolyline);
 
-      // Worker Marker
+      // Worker Marker (Cyan)
       workerMarker = L.circleMarker([workerLat, workerLon], {
         radius: 8,
         color: '#00f2fe',
         fillColor: '#00f2fe',
-        fillOpacity: 0.9
-      }).addTo(mapInstance).bindPopup("<b>Technician Location</b> (You)");
+        fillOpacity: 0.95
+      }).addTo(mapInstance).bindPopup("<b>Technician Location</b> (SNS Lead)");
 
-      // Meter Marker
+      // Destination Marker (Ruby Red)
       meterMarker = L.circleMarker([meterLat, meterLon], {
         radius: 10,
-        color: '#ff0055',
-        fillColor: '#ff0055',
-        fillOpacity: 0.9
+        color: '#ef4444',
+        fillColor: '#ef4444',
+        fillOpacity: 0.95
       }).addTo(mapInstance).bindPopup(`<b>${task.ticket_id}</b><br>${task.location}`);
 
-      // Polyline route
+      // Route Polyline
       routePolyline = L.polyline([
         [workerLat, workerLon],
         [(workerLat + meterLat)/2, workerLon],
@@ -463,6 +781,24 @@
       }).addTo(mapInstance);
 
       mapInstance.fitBounds(routePolyline.getBounds(), { padding: [50, 50] });
+
+      // Approximate walking distance & ETA
+      const distMeters = Math.round(getDistanceMeters(workerLat, workerLon, meterLat, meterLon));
+      const walkMin = Math.max(1, Math.round(distMeters / 80));
+      document.getElementById('routeDistanceEta').textContent = `${distMeters}m away • ~${walkMin} min walk`;
+    }
+
+    function getDistanceMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const φ1 = lat1 * Math.PI/180;
+      const φ2 = lat2 * Math.PI/180;
+      const Δφ = (lat2-lat1) * Math.PI/180;
+      const Δλ = (lon2-lon1) * Math.PI/180;
+      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ/2) * Math.sin(Δλ/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
     }
 
     function openExternalGoogleMaps() {
@@ -474,24 +810,47 @@
 
     async function markEnRoute() {
       if (!currentTask) return;
-      await fetch(`/api/worker/tasks/${currentTask.id}/status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'En Route' })
-      });
-      alert('Status marked: EN ROUTE. Central web dashboard notified!');
-      loadWorkerTasks();
+      try {
+        await fetch(`/api/worker/tasks/${currentTask.id}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'En Route' })
+        });
+        alert('Status updated: EN ROUTE. Central web dashboard notified!');
+        loadWorkerTasks();
+      } catch (e) {
+        alert('Status updated locally.');
+      }
     }
 
     function openPhotoCaptureForTask(task) {
       currentTask = task;
       document.getElementById('photoTaskTicketId').textContent = `${task.ticket_id} • ${task.location}`;
+      
+      const select = document.getElementById('activeWorkOrderSelect');
+      if (select) select.value = task.id;
+
+      // If already resolved and has photo, preview existing photo
+      if (task.photo_url) {
+        const img = document.getElementById('photoPreviewImg');
+        img.src = task.photo_url;
+        img.style.display = 'block';
+        document.getElementById('photoPlaceholderContent').style.display = 'none';
+        document.getElementById('btnRemovePhoto').style.display = 'block';
+      }
+
       switchTab('photo');
     }
 
     function openPhotoCaptureForCurrentTask() {
       if (!currentTask && activeTasks.length > 0) currentTask = activeTasks[0];
       if (currentTask) openPhotoCaptureForTask(currentTask);
+      else switchTab('photo');
+    }
+
+    function applyPreset(findings, action) {
+      document.getElementById('inputFindings').value = findings;
+      document.getElementById('inputAction').value = action;
     }
 
     function handlePhotoSelected(event) {
@@ -500,59 +859,108 @@
         selectedPhotoFile = file;
         const reader = new FileReader();
         reader.onload = function(e) {
+          selectedPhotoBase64 = e.target.result;
           const img = document.getElementById('photoPreviewImg');
-          img.src = e.target.result;
+          img.src = selectedPhotoBase64;
           img.style.display = 'block';
           document.getElementById('photoPlaceholderContent').style.display = 'none';
+          document.getElementById('btnRemovePhoto').style.display = 'block';
         }
         reader.readAsDataURL(file);
       }
     }
 
+    function removeSelectedPhoto(event) {
+      if (event) event.stopPropagation();
+      selectedPhotoFile = null;
+      selectedPhotoBase64 = null;
+      document.getElementById('cameraFileInput').value = '';
+      document.getElementById('photoPreviewImg').style.display = 'none';
+      document.getElementById('photoPlaceholderContent').style.display = 'block';
+      document.getElementById('btnRemovePhoto').style.display = 'none';
+    }
+
     async function submitPhotoProof() {
+      // If task not yet chosen, check dropdown
       if (!currentTask) {
-        alert('Please select an active work order first.');
+        const select = document.getElementById('activeWorkOrderSelect');
+        if (select && select.value) {
+          currentTask = activeTasks.find(t => t.id == select.value);
+        }
+      }
+
+      if (!currentTask) {
+        alert('Please select an active work order ticket first.');
         return;
       }
 
       const btn = document.getElementById('btnSubmitProof');
       const statusMsg = document.getElementById('uploadStatusMsg');
       btn.disabled = true;
-      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> SYNCING PHOTO TO WEB APPLICATION...`;
+      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> SYNCING PHOTO TO CENTRAL CORE...`;
 
-      const formData = new FormData();
-      formData.append('findings', document.getElementById('inputFindings').value);
-      formData.append('action_taken', document.getElementById('inputAction').value);
-      formData.append('notes', 'Field technician photo verification attached.');
-
-      if (selectedPhotoFile) {
-        formData.append('photo', selectedPhotoFile);
+      // Read photo as Base64 data URL if selected
+      let b64 = selectedPhotoBase64 || '';
+      if (!b64 && selectedPhotoFile) {
+        b64 = await new Promise((resolve) => {
+          const r = new FileReader();
+          r.onload = (e) => resolve(e.target.result);
+          r.readAsDataURL(selectedPhotoFile);
+        });
       }
+
+      const payload = {
+        findings: document.getElementById('inputFindings').value.trim() || 'Physical inspection & seal repair completed.',
+        action_taken: document.getElementById('inputAction').value.trim() || 'Replaced damaged flange gasket, zero leak verified.',
+        notes: 'Field technician photo verification attached from mobile device.',
+        photo_base64: b64,
+        photo_filename: selectedPhotoFile ? selectedPhotoFile.name : `proof_${currentTask.ticket_id}.jpg`
+      };
 
       try {
         const res = await fetch(`/api/worker/tasks/${currentTask.id}/complete`, {
           method: 'POST',
-          body: formData
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload)
         });
+
         const data = await res.json();
         if (data.status === 'success') {
           statusMsg.style.display = 'block';
-          statusMsg.style.color = 'var(--emerald-green)';
-          statusMsg.textContent = `✓ Work order ${currentTask.ticket_id} resolved! Water saved: ${data.work_order.water_saved_liters.toLocaleString()} L. Synchronized with Web App!`;
+          statusMsg.style.background = 'rgba(16, 185, 129, 0.15)';
+          statusMsg.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+          statusMsg.style.color = '#fff';
+          statusMsg.innerHTML = `
+            <div style="color: var(--emerald-green); font-weight: 800; font-size: 13px; margin-bottom: 4px;">✓ REMEDIATION VERIFIED & SYNCED</div>
+            <div>Work Order <strong>${currentTask.ticket_id}</strong> marked Resolved!</div>
+            <div style="font-family: var(--font-mono); color: var(--neon-cyan); margin-top: 3px;">+${(data.work_order.water_saved_liters || 0).toLocaleString()} L Water Saved</div>
+          `;
           btn.innerHTML = `✓ SYNC COMPLETED`;
+
+          // Clear selection and refresh
           setTimeout(() => {
             loadWorkerTasks();
             switchTab('feed');
-          }, 2000);
+            btn.disabled = false;
+            btn.innerHTML = `<i class="bi bi-cloud-arrow-up-fill"></i> SUBMIT PROOF & RESOLVE`;
+            removeSelectedPhoto();
+          }, 2400);
         } else {
           statusMsg.style.display = 'block';
+          statusMsg.style.background = 'rgba(239, 68, 68, 0.15)';
+          statusMsg.style.borderColor = 'rgba(239, 68, 68, 0.4)';
           statusMsg.style.color = 'var(--critical-red)';
-          statusMsg.textContent = 'Upload failed: ' + data.message;
+          statusMsg.textContent = 'Upload failed: ' + (data.message || 'Unknown server response');
           btn.disabled = false;
           btn.innerHTML = `TRY AGAIN`;
         }
       } catch (err) {
         statusMsg.style.display = 'block';
+        statusMsg.style.background = 'rgba(239, 68, 68, 0.15)';
+        statusMsg.style.borderColor = 'rgba(239, 68, 68, 0.4)';
         statusMsg.style.color = 'var(--critical-red)';
         statusMsg.textContent = 'Connection error: ' + err.message;
         btn.disabled = false;
@@ -576,6 +984,7 @@
       } else if (tab === 'photo') {
         document.getElementById('viewPhoto').classList.add('active');
         document.getElementById('navPhoto').classList.add('active');
+        updateActiveWorkOrderDropdown();
       }
     }
   </script>

@@ -140,6 +140,8 @@ function initAquaMap() {
   wireMapUi();
   populateSeverityOptions();
   loadMetersGeoData();
+  setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 60);
+  setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 300);
 }
 
 function setBasemap(styleKey) {
@@ -197,6 +199,8 @@ function wireMapUi() {
   });
   bind('btnCritical', showCriticalMeters);
   bind('btnFullscreen', toggleMapFullscreen);
+  bind('btnExitFsBanner', toggleMapFullscreen);
+  bind('btnToggleIntel', toggleFsIntel);
 
   // Buildings layer toggle
   bind('btnToggleBuildings', toggleBuildingsLayer);
@@ -681,7 +685,10 @@ function showBuildingPanel(b) {
   body.innerHTML = `
     <div class="mt-head">
       <div class="mt-title"><i class="bi ${b.icon || 'bi-building'} me-2 text-info"></i>Building Intelligence</div>
-      <button type="button" class="aq-btn aq-btn-icon btn-sm" onclick="backToRegistry()" title="Back to registry"><i class="bi bi-arrow-left"></i></button>
+      <div class="d-flex align-items-center gap-1">
+        <button type="button" class="aq-btn aq-btn-icon btn-sm" onclick="backToRegistry()" title="Back to registry"><i class="bi bi-arrow-left"></i></button>
+        <button type="button" class="aq-btn aq-btn-ghost btn-sm fs-intel-close-btn" onclick="toggleFsIntel()" title="Hide panel"><i class="bi bi-x-lg"></i></button>
+      </div>
     </div>
     <div class="mt-body">
       <div class="mt-meter-head">
@@ -729,7 +736,10 @@ function showBuildingPanel(b) {
     </div>`;
 
   const intel = document.getElementById('mapIntel');
-  if (intel) intel.classList.add('open');
+  if (intel) {
+    intel.classList.add('open');
+    intel.classList.remove('collapsed');
+  }
 }
 
 function focusBuilding(name) {
@@ -1013,8 +1023,11 @@ function showRegistryView(meters) {
 
   body.innerHTML = `
     <div class="mt-head">
-      <div class="mt-title"><i class="bi bi-diagram-3 me-2"></i>Registry</div>
-      <small class="font-mono">CAMPUS GEOMETRY</small>
+      <div class="d-flex flex-column">
+        <div class="mt-title"><i class="bi bi-diagram-3 me-2"></i>Registry</div>
+        <small class="font-mono text-muted">CAMPUS GEOMETRY</small>
+      </div>
+      <button type="button" class="aq-btn aq-btn-ghost btn-sm fs-intel-close-btn" onclick="toggleFsIntel()" title="Hide panel"><i class="bi bi-x-lg"></i></button>
     </div>
     <div class="mt-body">
       <p class="reg-copy">Click any building or meter marker on the map to inspect live consumption telemetry, baseline deviations, and anomaly records.</p>
@@ -1066,8 +1079,13 @@ function showMeterPanel(meter) {
 
   body.innerHTML = `
     <div class="mt-head">
-      <div class="mt-title"><i class="bi bi-droplet-half me-2"></i>Meter Intelligence</div>
-      <button type="button" class="aq-btn aq-btn-icon btn-sm" onclick="backToRegistry()" title="Back to registry"><i class="bi bi-arrow-left"></i></button>
+      <div>
+        <div class="mt-title"><i class="bi bi-droplet-half me-2"></i>Meter Intelligence</div>
+      </div>
+      <div class="d-flex align-items-center gap-1">
+        <button type="button" class="aq-btn aq-btn-ghost btn-sm py-0 px-2" onclick="backToRegistry()" title="Back to registry"><i class="bi bi-arrow-left me-1"></i>Registry</button>
+        <button type="button" class="aq-btn aq-btn-ghost btn-sm fs-intel-close-btn" onclick="toggleFsIntel()" title="Hide panel"><i class="bi bi-x-lg"></i></button>
+      </div>
     </div>
     <div class="mt-body">
       <div class="mt-meter-head">
@@ -1109,7 +1127,10 @@ function showMeterPanel(meter) {
     </div>`;
 
   const intel = document.getElementById('mapIntel');
-  if (intel) intel.classList.add('open');
+  if (intel) {
+    intel.classList.add('open');
+    intel.classList.remove('collapsed');
+  }
 }
 
 function backToRegistry() {
@@ -1186,14 +1207,182 @@ function selectFirstSearchResult() {
   showMeterPanel(hit);
 }
 
-function toggleMapFullscreen() {
+// ---------------------------------------------------------------------------
+// FULLSCREEN CONTROLLER & RESPONSIVE ADAPTATION
+// ---------------------------------------------------------------------------
+function isMapFullscreenActive() {
+  const stage = document.getElementById('mapStage');
+  if (!stage) return false;
+  return Boolean(
+    document.fullscreenElement === stage ||
+    document.webkitFullscreenElement === stage ||
+    document.mozFullScreenElement === stage ||
+    document.msFullscreenElement === stage ||
+    stage.classList.contains('fs')
+  );
+}
+
+function enterMapFullscreen() {
   const stage = document.getElementById('mapStage');
   if (!stage) return;
-  stage.classList.toggle('fs');
-  const btn = document.getElementById('btnFullscreen');
-  if (btn) {
-    const on = stage.classList.contains('fs');
-    btn.innerHTML = on ? '<i class="bi bi-fullscreen-exit"></i>' : '<i class="bi bi-arrows-fullscreen"></i>';
+
+  const requestFn = stage.requestFullscreen ||
+                    stage.webkitRequestFullscreen ||
+                    stage.mozRequestFullScreen ||
+                    stage.msRequestFullscreen;
+
+  if (requestFn) {
+    try {
+      const p = requestFn.call(stage);
+      if (p && p.catch) {
+        p.catch(() => applyFullscreenUI(true));
+      } else {
+        applyFullscreenUI(true);
+      }
+    } catch (e) {
+      applyFullscreenUI(true);
+    }
+  } else {
+    applyFullscreenUI(true);
   }
-  setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 260);
+}
+
+function exitMapFullscreen() {
+  const stage = document.getElementById('mapStage');
+  if (!stage) return;
+
+  const isNative = Boolean(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  );
+
+  if (isNative) {
+    const exitFn = document.exitFullscreen ||
+                   document.webkitExitFullscreen ||
+                   document.mozCancelFullScreen ||
+                   document.msExitFullscreen;
+    if (exitFn) {
+      try {
+        const p = exitFn.call(document);
+        if (p && p.catch) p.catch(() => {});
+      } catch (e) {}
+    }
+  }
+  applyFullscreenUI(false);
+}
+
+function toggleMapFullscreen() {
+  if (isMapFullscreenActive()) {
+    exitMapFullscreen();
+  } else {
+    enterMapFullscreen();
+  }
+}
+
+function applyFullscreenUI(active) {
+  const stage = document.getElementById('mapStage');
+  const btn = document.getElementById('btnFullscreen');
+  const exitBanner = document.getElementById('btnExitFsBanner');
+  const intel = document.getElementById('mapIntel');
+  const panelCol = document.getElementById('mapPanelCol');
+
+  if (!stage) return;
+
+  if (active) {
+    stage.classList.add('fs');
+    document.body.classList.add('map-fullscreen-active');
+    if (btn) {
+      btn.innerHTML = '<i class="bi bi-fullscreen-exit"></i>';
+      btn.title = 'Exit Fullscreen (Esc)';
+      btn.setAttribute('aria-label', 'Exit Fullscreen');
+      btn.classList.add('active');
+    }
+    if (exitBanner) exitBanner.style.display = 'inline-flex';
+
+    // Dock intel panel inside fullscreen stage so user can view/inspect meters
+    if (intel && !stage.contains(intel)) {
+      stage.appendChild(intel);
+    }
+    if (intel) {
+      intel.classList.remove('collapsed');
+    }
+  } else {
+    stage.classList.remove('fs');
+    document.body.classList.remove('map-fullscreen-active');
+    if (btn) {
+      btn.innerHTML = '<i class="bi bi-arrows-fullscreen"></i>';
+      btn.title = 'Fullscreen';
+      btn.setAttribute('aria-label', 'Toggle fullscreen');
+      btn.classList.remove('active');
+    }
+    if (exitBanner) exitBanner.style.display = 'none';
+
+    // Restore intel panel back to right sidebar column
+    if (intel && panelCol && !panelCol.contains(intel)) {
+      panelCol.appendChild(intel);
+    }
+    if (intel) {
+      intel.classList.remove('collapsed');
+    }
+  }
+
+  // Trigger leaflet redraw at multiple intervals to guarantee smooth rendering
+  const triggerResize = () => {
+    if (mapInstance) {
+      mapInstance.invalidateSize();
+    }
+  };
+  triggerResize();
+  setTimeout(triggerResize, 80);
+  setTimeout(triggerResize, 200);
+  setTimeout(triggerResize, 450);
+}
+
+function toggleFsIntel() {
+  const intel = document.getElementById('mapIntel');
+  if (!intel) return;
+  intel.classList.toggle('collapsed');
+}
+
+// Sync with browser native fullscreen change events (e.g., when user presses Escape key)
+['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+  document.addEventListener(evt, () => {
+    const stage = document.getElementById('mapStage');
+    const isNativeFs = Boolean(
+      document.fullscreenElement === stage ||
+      document.webkitFullscreenElement === stage ||
+      document.mozFullScreenElement === stage ||
+      document.msFullscreenElement === stage
+    );
+    applyFullscreenUI(isNativeFs);
+  });
+});
+
+// Escape key listener for CSS fullscreen fallback
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    if (isMapFullscreenActive()) {
+      exitMapFullscreen();
+    }
+  }
+});
+
+// Window resize listener
+window.addEventListener('resize', () => {
+  if (mapInstance) {
+    mapInstance.invalidateSize();
+  }
+});
+
+// Auto-bootstrap map if #map exists on page
+if (document.getElementById('map')) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!mapInstance) initAquaMap();
+    });
+  } else {
+    if (!mapInstance) initAquaMap();
+  }
 }

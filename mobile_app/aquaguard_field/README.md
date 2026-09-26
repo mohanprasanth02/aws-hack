@@ -26,11 +26,9 @@ A cross-platform Flutter mobile application designed for campus water maintenanc
 
 ### 2. Configure Host IP
 Open [`lib/config/api_config.dart`](lib/config/api_config.dart):
-- **Android Emulator**: Uses `http://10.0.2.2:5000` (already set by default).
-- **Physical Device**: Connect phone to the same Wi-Fi as your PC, find your PC's IP (`ipconfig`), and set:
-  ```dart
-  static const String baseUrl = 'http://192.168.1.xxx:5000';
-  ```
+- **Current Mobile Hotspot / Network IP**: `http://10.181.231.10:5000` (Configured as default).
+- **Flutter Web Server**: `http://10.181.231.10:5050`
+- **Android Emulator**: Uses `http://10.0.2.2:5000` (available via quick preset).
 
 ### 3. Install Dependencies & Launch
 ```bash

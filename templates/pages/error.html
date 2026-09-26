@@ -11,12 +11,9 @@
   <h1 class="h3 fw-bold text-white mb-2">Error {{ error_code }}</h1>
   <p class="text-secondary mb-4">{{ error_message }}</p>
 
-  <div class="d-flex justify-content-center gap-3">
+  <div class="d-flex justify-content-center">
     <a href="{{ url_for('main.dashboard') }}" class="btn btn-holo">
       <i class="bi bi-speedometer2 me-1"></i> Return to Dashboard
-    </a>
-    <a href="{{ url_for('main.index') }}" class="btn btn-holo-alt">
-      <i class="bi bi-house me-1"></i> Home
     </a>
   </div>
 </div>

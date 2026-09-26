@@ -31,8 +31,8 @@ function initWaterAtmosphere() {
   resize();
 
   const motes = [];
-  const Mote = function() {
-    this.reset = function() {
+  const Mote = function () {
+    this.reset = function () {
       this.x = Math.random() * width;
       this.y = height + Math.random() * 40;
       this.size = Math.random() * 3 + 1;
@@ -51,9 +51,14 @@ function initWaterAtmosphere() {
   }
 
   let time = 0;
-  function frame() {
+  let lastTime = performance.now();
+  function frame(currentTime) {
+    const now = currentTime || performance.now();
+    const dt = Math.min((now - lastTime) / 16.667, 2.0) || 1.0;
+    lastTime = now;
+
     ctx.clearRect(0, 0, width, height);
-    time += 0.007;
+    time += 0.007 * dt;
     const ray = ctx.createLinearGradient(0, 0, 0, height * 0.7);
     ray.addColorStop(0, `rgba(255, 255, 255, ${0.028 + Math.sin(time) * 0.012})`);
     ray.addColorStop(0.5, `rgba(140, 145, 150, ${0.016 + Math.cos(time * 0.8) * 0.008})`);
@@ -62,8 +67,8 @@ function initWaterAtmosphere() {
     ctx.fillRect(0, 0, width, height);
 
     for (const m of motes) {
-      m.y -= m.speedY;
-      m.x += Math.sin(m.y * 0.008) * 0.5 + m.speedX;
+      m.y -= m.speedY * dt;
+      m.x += (Math.sin(m.y * 0.008) * 0.5 + m.speedX) * dt;
       if (m.y < -30 || m.x < -30 || m.x > width + 30) m.reset();
       ctx.beginPath();
       ctx.arc(m.x, m.y, m.size, 0, Math.PI * 2);
@@ -81,7 +86,7 @@ function initWaterAtmosphere() {
     }
     requestAnimationFrame(frame);
   }
-  frame();
+  requestAnimationFrame(frame);
 }
 
 /* 2. Cursor ambient glow (desktop only) */

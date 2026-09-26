@@ -6,17 +6,17 @@
 <!-- ============================================================
      WATER RISK NETWORK — PAGE HEADER
      ============================================================ -->
-<div class="glass-panel p-4 mb-3 aq-page-head">
+<div class="glass-panel px-3 py-2 mb-2 aq-page-head" style="flex-shrink: 0;">
   <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
-    <div>
-      <h3 class="h5 fw-bold text-white mb-1">
-        <i class="bi bi-signpost-split text-info me-2"></i>Water Risk Network
+    <div class="d-flex align-items-center gap-2">
+      <h3 class="h6 fw-bold text-white mb-0">
+        <i class="bi bi-signpost-split text-info me-1"></i>Water Risk Network
       </h3>
-      <p class="text-secondary small mb-0">Geographic intelligence for water consumption anomalies.</p>
+      <span class="text-secondary small d-none d-md-inline" style="font-size: 11px;">Geographic intelligence for water anomalies</span>
     </div>
-    <div class="text-end">
+    <div class="d-flex align-items-center gap-3">
       <span class="map-live-chip"><span class="live-dot ok"></span><span id="mapLiveLabel">DATA READY</span></span>
-      <div class="text-secondary small font-mono mt-1" id="mapLastAnalysis">Last analysis: —</div>
+      <div class="text-secondary small font-mono" id="mapLastAnalysis" style="font-size: 10.5px;">Last analysis: —</div>
     </div>
   </div>
 </div>
@@ -24,10 +24,10 @@
 <!-- ============================================================
      MAP STAGE + RIGHT INTELLIGENCE PANEL
      ============================================================ -->
-<div class="row g-3 aq-map-layout mb-4">
+<div class="row g-2 aq-map-layout">
 
   <!-- MAP STAGE (≈72% desktop) -->
-  <div class="col-xl-9 map-stage-col">
+  <div class="col-xl-9 map-stage-col" id="mapStageCol">
     <div class="map-stage" id="mapStage">
 
       <!-- Map top chrome -->
@@ -44,6 +44,10 @@
           <i class="bi bi-search"></i>
           <input type="text" id="mapSearchInput" placeholder="Search meters..." aria-label="Search meters" autocomplete="off">
         </div>
+
+        <button type="button" class="aq-btn aq-btn-ghost fs-exit-btn" id="btnExitFsBanner" title="Exit Fullscreen (Esc)" style="display: none;">
+          <i class="bi bi-fullscreen-exit me-1"></i> Exit Fullscreen <kbd class="ms-1 font-mono" style="font-size:9px; opacity:0.75; background:rgba(255,255,255,0.12); padding:1px 4px; border-radius:4px;">ESC</kbd>
+        </button>
 
         <button type="button" class="aq-btn d-xl-none" id="mapFilterToggle" aria-label="Toggle filters" title="Filter map">
           <i class="bi bi-funnel"></i>
@@ -92,6 +96,7 @@
         <button type="button" class="aq-btn active" id="btnToggleBuildings" aria-label="Toggle buildings layer" title="Toggle Buildings Layer"><i class="bi bi-buildings-fill"></i></button>
         <button type="button" class="aq-btn" id="btnBasemapSelect" aria-label="Switch map style" title="Basemap Styles"><i class="bi bi-layers-half"></i></button>
         <button type="button" class="aq-btn" id="btnCritical" aria-label="Show critical only" title="Show critical"><i class="bi bi-radioactive"></i></button>
+        <button type="button" class="aq-btn" id="btnToggleIntel" aria-label="Toggle details panel" title="Meter Details Panel"><i class="bi bi-layout-sidebar-inset-reverse"></i></button>
         <button type="button" class="aq-btn" id="btnFullscreen" aria-label="Toggle fullscreen" title="Fullscreen"><i class="bi bi-arrows-fullscreen"></i></button>
       </div>
 
@@ -155,7 +160,7 @@
   </div>
 
   <!-- RIGHT INTELLIGENCE / REGISTRY PANEL (≈28% desktop) -->
-  <div class="col-xl-3 map-panel-col">
+  <div class="col-xl-3 map-panel-col" id="mapPanelCol">
     <aside class="map-intel" id="mapIntel" aria-label="Meter intelligence panel">
       <div class="map-intel-body" id="mapIntelBody"></div>
     </aside>
@@ -165,8 +170,10 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAquaMap);
+} else {
   initAquaMap();
-});
+}
 </script>
 {% endblock %}

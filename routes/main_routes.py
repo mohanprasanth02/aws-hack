@@ -6,11 +6,7 @@ import json
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
-def index():
-    return render_template('pages/landing.html')
-
 @main_bp.route('/dashboard')
-@login_required
 def dashboard():
     meters = Meter.query.all()
     locations = sorted(list(set(m.location for m in meters if m.location)))
@@ -25,6 +21,10 @@ def dashboard():
         buildings=buildings,
         latest_run=latest_run
     )
+
+@main_bp.route('/index')
+def index():
+    return redirect(url_for('main.dashboard'))
 
 @main_bp.route('/upload')
 @login_required
